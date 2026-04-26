@@ -9,3 +9,4 @@
 /.env.test
 /.DS_Store
 /.vscode
+.ds_store

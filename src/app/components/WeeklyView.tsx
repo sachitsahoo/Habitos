@@ -1,13 +1,9 @@
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { CircularProgress } from './CircularProgress';
 import { ChevronLeft, ChevronRight, Plus, X } from 'lucide-react';
 import { useDarkMode } from '../App';
-
-interface Habit {
-  id: string;
-  name: string;
-  completed: boolean;
-}
+import type { Habit } from '../App';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 
 interface Task {
   id: string;
@@ -15,9 +11,9 @@ interface Task {
   completed: boolean;
 }
 
-interface DayData {
-  date: Date;
-  habits: Habit[];
+// DayData stored in localStorage — no `date` field (always derivable from the key)
+interface StoredDayData {
+  habits: (Habit & { completed: boolean })[];
   tasks: Task[];
   notes: string;
   improvements: string;
@@ -26,19 +22,10 @@ interface DayData {
   motivation: number;
 }
 
-const MOCK_HABITS = [
-  { id: '1', name: 'Morning Exercise' },
-  { id: '2', name: 'Read 30 minutes' },
-  { id: '3', name: 'Meditate' },
-  { id: '4', name: 'Drink 8 glasses of water' },
-  { id: '5', name: 'No social media before noon' }
-];
-
 function getWeekDays(baseDate: Date): Date[] {
   const days: Date[] = [];
   const startOfWeek = new Date(baseDate);
   startOfWeek.setDate(baseDate.getDate() - baseDate.getDay());
-
   for (let i = 0; i < 7; i++) {
     const day = new Date(startOfWeek);
     day.setDate(startOfWeek.getDate() + i);
@@ -47,123 +34,166 @@ function getWeekDays(baseDate: Date): Date[] {
   return days;
 }
 
-export function WeeklyView() {
-  const { isDark } = useDarkMode();
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const weekDays = getWeekDays(currentDate);
+function getDefaultDay(habits: Habit[]): StoredDayData {
+  return {
+    habits: habits.map(h => ({ ...h, completed: false })),
+    tasks: [],
+    notes: '',
+    improvements: '',
+    gratitude: '',
+    mood: 5,
+    motivation: 5,
+  };
+}
 
-  const [weekData, setWeekData] = useState<Record<string, DayData>>(() => {
-    const data: Record<string, DayData> = {};
-    weekDays.forEach((date) => {
-      const key = date.toISOString().split('T')[0];
-      data[key] = {
-        date,
-        habits: MOCK_HABITS.map(h => ({ ...h, completed: Math.random() > 0.5 })),
-        tasks: [
-          { id: '1', text: 'Review project proposal', completed: Math.random() > 0.5 },
-          { id: '2', text: 'Call dentist', completed: Math.random() > 0.5 }
-        ],
-        notes: '',
-        improvements: '',
-        gratitude: '',
-        mood: Math.floor(Math.random() * 5) + 6,
-        motivation: Math.floor(Math.random() * 5) + 6
-      };
+interface WeeklyViewProps {
+  habits: Habit[];
+}
+
+export function WeeklyView({ habits }: WeeklyViewProps) {
+  const { isDark } = useDarkMode();
+  const [currentDate, setCurrentDate] = useLocalStorage('habitos-week-current', new Date().toISOString());
+  const [weekData, setWeekData] = useLocalStorage<Record<string, StoredDayData>>('habitos-week-data', {});
+
+  const parsedDate = new Date(currentDate);
+  const weekDays = getWeekDays(parsedDate);
+
+  // When habits list changes, reconcile all stored day entries:
+  // - add new habits (uncompleted), remove deleted ones, update renamed ones
+  useEffect(() => {
+    setWeekData(prev => {
+      const keys = Object.keys(prev);
+      if (keys.length === 0) return prev;
+      const updated: Record<string, StoredDayData> = {};
+      for (const key of keys) {
+        const day = prev[key];
+        updated[key] = {
+          ...day,
+          habits: habits.map(h => {
+            const existing = day.habits.find(dh => dh.id === h.id);
+            return existing ? { ...existing, name: h.name } : { ...h, completed: false };
+          }),
+        };
+      }
+      return updated;
     });
-    return data;
-  });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [habits]);
+
+  // Returns stored data for a day, or a fresh default (lazy — not written until first user action)
+  const getDay = (dateKey: string): StoredDayData =>
+    weekData[dateKey] ?? getDefaultDay(habits);
 
   const previousWeek = () => {
-    const newDate = new Date(currentDate);
-    newDate.setDate(currentDate.getDate() - 7);
-    setCurrentDate(newDate);
+    const d = new Date(parsedDate);
+    d.setDate(d.getDate() - 7);
+    setCurrentDate(d.toISOString());
   };
 
   const nextWeek = () => {
-    const newDate = new Date(currentDate);
-    newDate.setDate(currentDate.getDate() + 7);
-    setCurrentDate(newDate);
+    const d = new Date(parsedDate);
+    d.setDate(d.getDate() + 7);
+    setCurrentDate(d.toISOString());
   };
 
   const getWeekCompletion = () => {
-    let totalHabits = 0;
-    let completedHabits = 0;
-    Object.values(weekData).forEach(day => {
-      totalHabits += day.habits.length;
-      completedHabits += day.habits.filter(h => h.completed).length;
+    let total = 0, completed = 0;
+    weekDays.forEach(day => {
+      const key = day.toISOString().split('T')[0];
+      const data = getDay(key);
+      total += data.habits.length;
+      completed += data.habits.filter(h => h.completed).length;
     });
-    return totalHabits > 0 ? (completedHabits / totalHabits) * 100 : 0;
+    return total > 0 ? (completed / total) * 100 : 0;
   };
 
-  const getDayCompletion = (dayData: DayData) => {
-    const total = dayData.habits.length;
-    const completed = dayData.habits.filter(h => h.completed).length;
+  const getDayCompletion = (data: StoredDayData) => {
+    const total = data.habits.length;
+    const completed = data.habits.filter(h => h.completed).length;
     return total > 0 ? (completed / total) * 100 : 0;
   };
 
   const formatDateRange = () => {
     const start = weekDays[0];
     const end = weekDays[6];
-    return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+    return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
   };
 
+  // Mutation helpers — all use lazy init via `?? getDefaultDay(habits)`
   const toggleHabit = (dateKey: string, habitId: string) => {
-    setWeekData(prev => ({
-      ...prev,
-      [dateKey]: {
-        ...prev[dateKey],
-        habits: prev[dateKey].habits.map(h =>
-          h.id === habitId ? { ...h, completed: !h.completed } : h
-        )
-      }
-    }));
+    setWeekData(prev => {
+      const day = prev[dateKey] ?? getDefaultDay(habits);
+      return {
+        ...prev,
+        [dateKey]: {
+          ...day,
+          habits: day.habits.map(h => h.id === habitId ? { ...h, completed: !h.completed } : h),
+        },
+      };
+    });
   };
 
   const toggleTask = (dateKey: string, taskId: string) => {
-    setWeekData(prev => ({
-      ...prev,
-      [dateKey]: {
-        ...prev[dateKey],
-        tasks: prev[dateKey].tasks.map(t =>
-          t.id === taskId ? { ...t, completed: !t.completed } : t
-        )
-      }
-    }));
+    setWeekData(prev => {
+      const day = prev[dateKey] ?? getDefaultDay(habits);
+      return {
+        ...prev,
+        [dateKey]: {
+          ...day,
+          tasks: day.tasks.map(t => t.id === taskId ? { ...t, completed: !t.completed } : t),
+        },
+      };
+    });
   };
 
   const addTask = (dateKey: string) => {
-    setWeekData(prev => ({
-      ...prev,
-      [dateKey]: {
-        ...prev[dateKey],
-        tasks: [
-          ...prev[dateKey].tasks,
-          { id: Date.now().toString(), text: '', completed: false }
-        ]
-      }
-    }));
+    setWeekData(prev => {
+      const day = prev[dateKey] ?? getDefaultDay(habits);
+      return {
+        ...prev,
+        [dateKey]: {
+          ...day,
+          tasks: [...day.tasks, { id: Date.now().toString(), text: '', completed: false }],
+        },
+      };
+    });
   };
 
   const updateTask = (dateKey: string, taskId: string, text: string) => {
-    setWeekData(prev => ({
-      ...prev,
-      [dateKey]: {
-        ...prev[dateKey],
-        tasks: prev[dateKey].tasks.map(t =>
-          t.id === taskId ? { ...t, text } : t
-        )
-      }
-    }));
+    setWeekData(prev => {
+      const day = prev[dateKey] ?? getDefaultDay(habits);
+      return {
+        ...prev,
+        [dateKey]: {
+          ...day,
+          tasks: day.tasks.map(t => t.id === taskId ? { ...t, text } : t),
+        },
+      };
+    });
   };
 
   const deleteTask = (dateKey: string, taskId: string) => {
-    setWeekData(prev => ({
-      ...prev,
-      [dateKey]: {
-        ...prev[dateKey],
-        tasks: prev[dateKey].tasks.filter(t => t.id !== taskId)
-      }
-    }));
+    setWeekData(prev => {
+      const day = prev[dateKey] ?? getDefaultDay(habits);
+      return {
+        ...prev,
+        [dateKey]: { ...day, tasks: day.tasks.filter(t => t.id !== taskId) },
+      };
+    });
+  };
+
+  const updateField = (dateKey: string, field: 'notes' | 'improvements' | 'gratitude', value: string) => {
+    setWeekData(prev => {
+      const day = prev[dateKey] ?? getDefaultDay(habits);
+      return { ...prev, [dateKey]: { ...day, [field]: value } };
+    });
+  };
+
+  const updateNumber = (dateKey: string, field: 'mood' | 'motivation', value: number) => {
+    setWeekData(prev => {
+      const day = prev[dateKey] ?? getDefaultDay(habits);
+      return { ...prev, [dateKey]: { ...day, [field]: value } };
+    });
   };
 
   return (
@@ -197,9 +227,8 @@ export function WeeklyView() {
             <ChevronRight className="w-5 h-5" />
           </button>
         </div>
-        <div className={`p-4 rounded-lg ${
-          isDark ? 'bg-[#243347]' : 'bg-white'
-        }`} style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+        <div className={`p-4 rounded-lg ${isDark ? 'bg-[#243347]' : 'bg-white'}`}
+             style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
           <CircularProgress percentage={getWeekCompletion()} size={80} strokeWidth={6} />
         </div>
       </div>
@@ -209,9 +238,7 @@ export function WeeklyView() {
         <div className="flex gap-4 min-w-min pr-6">
           {weekDays.map((day) => {
             const dateKey = day.toISOString().split('T')[0];
-            const dayData = weekData[dateKey];
-            if (!dayData) return null;
-
+            const dayData = getDay(dateKey);
             const dayCompletion = getDayCompletion(dayData);
             const completedCount = dayData.habits.filter(h => h.completed).length;
 
@@ -226,9 +253,7 @@ export function WeeklyView() {
                 style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}
               >
                 {/* Day Header */}
-                <div className={`text-center pb-3 border-b ${
-                  isDark ? 'border-[#3A4A5E]' : 'border-[#D4D2CA]'
-                }`}>
+                <div className={`text-center pb-3 border-b ${isDark ? 'border-[#3A4A5E]' : 'border-[#D4D2CA]'}`}>
                   <div className={`font-semibold text-lg ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>
                     {day.toLocaleDateString('en-US', { weekday: 'short' })}
                   </div>
@@ -243,9 +268,8 @@ export function WeeklyView() {
                 </div>
 
                 {/* Completion Count */}
-                <div className={`text-center text-sm font-medium ${
-                  isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'
-                }`} style={{ fontFamily: 'var(--font-mono)' }}>
+                <div className={`text-center text-sm font-medium ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}
+                     style={{ fontFamily: 'var(--font-mono)' }}>
                   {completedCount} / {dayData.habits.length} completed
                 </div>
 
@@ -260,12 +284,8 @@ export function WeeklyView() {
                         onClick={() => toggleHabit(dateKey, habit.id)}
                         className={`w-4 h-4 rounded border transition-all flex-shrink-0 ${
                           habit.completed
-                            ? isDark
-                              ? 'bg-[#7AA897] border-[#7AA897]'
-                              : 'bg-[#6B9B8C] border-[#6B9B8C]'
-                            : isDark
-                              ? 'border-[#3A4A5E] hover:border-[#7AA897]/50'
-                              : 'border-[#D4D2CA] hover:border-[#6B9B8C]/50'
+                            ? isDark ? 'bg-[#7AA897] border-[#7AA897]' : 'bg-[#6B9B8C] border-[#6B9B8C]'
+                            : isDark ? 'border-[#3A4A5E] hover:border-[#7AA897]/50' : 'border-[#D4D2CA] hover:border-[#6B9B8C]/50'
                         }`}
                       />
                       <span className={`text-sm ${
@@ -290,12 +310,8 @@ export function WeeklyView() {
                         onClick={() => toggleTask(dateKey, task.id)}
                         className={`w-4 h-4 rounded border flex-shrink-0 transition-all cursor-pointer ${
                           task.completed
-                            ? isDark
-                              ? 'bg-[#7AA897] border-[#7AA897]'
-                              : 'bg-[#6B9B8C] border-[#6B9B8C]'
-                            : isDark
-                              ? 'border-[#3A4A5E] hover:border-[#7AA897]/50'
-                              : 'border-[#D4D2CA] hover:border-[#6B9B8C]/50'
+                            ? isDark ? 'bg-[#7AA897] border-[#7AA897]' : 'bg-[#6B9B8C] border-[#6B9B8C]'
+                            : isDark ? 'border-[#3A4A5E] hover:border-[#7AA897]/50' : 'border-[#D4D2CA] hover:border-[#6B9B8C]/50'
                         }`}
                       />
                       <input
@@ -324,9 +340,7 @@ export function WeeklyView() {
                   <button
                     onClick={() => addTask(dateKey)}
                     className={`flex items-center gap-1 text-sm font-medium transition-colors ${
-                      isDark
-                        ? 'text-[#7AA897] hover:text-[#94BDAC]'
-                        : 'text-[#6B9B8C] hover:text-[#5A8B7D]'
+                      isDark ? 'text-[#7AA897] hover:text-[#94BDAC]' : 'text-[#6B9B8C] hover:text-[#5A8B7D]'
                     }`}
                   >
                     <Plus className="w-4 h-4" />
@@ -336,17 +350,12 @@ export function WeeklyView() {
 
                 {/* Notes */}
                 <div>
-                  <label className={`font-medium text-sm block mb-1.5 ${
-                    isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'
-                  }`}>
+                  <label className={`font-medium text-sm block mb-1.5 ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>
                     Notes
                   </label>
                   <textarea
                     value={dayData.notes}
-                    onChange={(e) => setWeekData(prev => ({
-                      ...prev,
-                      [dateKey]: { ...prev[dateKey], notes: e.target.value }
-                    }))}
+                    onChange={(e) => updateField(dateKey, 'notes', e.target.value)}
                     placeholder="Daily notes..."
                     className={`w-full text-sm px-3 py-2 rounded-lg transition-all resize-none ${
                       isDark
@@ -359,17 +368,12 @@ export function WeeklyView() {
 
                 {/* Improvements */}
                 <div>
-                  <label className={`font-medium text-sm block mb-1.5 ${
-                    isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'
-                  }`}>
+                  <label className={`font-medium text-sm block mb-1.5 ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>
                     Improvements
                   </label>
                   <textarea
                     value={dayData.improvements}
-                    onChange={(e) => setWeekData(prev => ({
-                      ...prev,
-                      [dateKey]: { ...prev[dateKey], improvements: e.target.value }
-                    }))}
+                    onChange={(e) => updateField(dateKey, 'improvements', e.target.value)}
                     placeholder="What can I improve?"
                     className={`w-full text-sm px-3 py-2 rounded-lg transition-all resize-none ${
                       isDark
@@ -382,17 +386,12 @@ export function WeeklyView() {
 
                 {/* Gratitude */}
                 <div>
-                  <label className={`font-medium text-sm block mb-1.5 ${
-                    isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'
-                  }`}>
+                  <label className={`font-medium text-sm block mb-1.5 ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>
                     Gratitude
                   </label>
                   <textarea
                     value={dayData.gratitude}
-                    onChange={(e) => setWeekData(prev => ({
-                      ...prev,
-                      [dateKey]: { ...prev[dateKey], gratitude: e.target.value }
-                    }))}
+                    onChange={(e) => updateField(dateKey, 'gratitude', e.target.value)}
                     placeholder="I'm grateful for..."
                     className={`w-full text-sm px-3 py-2 rounded-lg transition-all resize-none ${
                       isDark
@@ -403,54 +402,28 @@ export function WeeklyView() {
                   />
                 </div>
 
-                {/* Mood and Motivation */}
+                {/* Mood & Motivation */}
                 <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className={`font-medium text-sm block mb-1.5 ${
-                      isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'
-                    }`}>
-                      Mood
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="10"
-                      value={dayData.mood}
-                      onChange={(e) => setWeekData(prev => ({
-                        ...prev,
-                        [dateKey]: { ...prev[dateKey], mood: parseInt(e.target.value) || 5 }
-                      }))}
-                      className={`w-full text-sm px-3 py-2 rounded-lg transition-all ${
-                        isDark
-                          ? 'bg-[#1A2332] text-[#E8E6E0] focus:border-b-2 focus:border-[#7AA897]'
-                          : 'bg-[#F8F7F4] text-[#2D2D2D] focus:border-b-2 focus:border-[#6B9B8C]'
-                      } border-0 focus:outline-none`}
-                      style={{ fontFamily: 'var(--font-mono)' }}
-                    />
-                  </div>
-                  <div>
-                    <label className={`font-medium text-sm block mb-1.5 ${
-                      isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'
-                    }`}>
-                      Motivation
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="10"
-                      value={dayData.motivation}
-                      onChange={(e) => setWeekData(prev => ({
-                        ...prev,
-                        [dateKey]: { ...prev[dateKey], motivation: parseInt(e.target.value) || 5 }
-                      }))}
-                      className={`w-full text-sm px-3 py-2 rounded-lg transition-all ${
-                        isDark
-                          ? 'bg-[#1A2332] text-[#E8E6E0] focus:border-b-2 focus:border-[#7AA897]'
-                          : 'bg-[#F8F7F4] text-[#2D2D2D] focus:border-b-2 focus:border-[#6B9B8C]'
-                      } border-0 focus:outline-none`}
-                      style={{ fontFamily: 'var(--font-mono)' }}
-                    />
-                  </div>
+                  {(['mood', 'motivation'] as const).map((field) => (
+                    <div key={field}>
+                      <label className={`font-medium text-sm block mb-1.5 ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>
+                        {field.charAt(0).toUpperCase() + field.slice(1)}
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="10"
+                        value={dayData[field]}
+                        onChange={(e) => updateNumber(dateKey, field, parseInt(e.target.value) || 5)}
+                        className={`w-full text-sm px-3 py-2 rounded-lg transition-all ${
+                          isDark
+                            ? 'bg-[#1A2332] text-[#E8E6E0] focus:border-b-2 focus:border-[#7AA897]'
+                            : 'bg-[#F8F7F4] text-[#2D2D2D] focus:border-b-2 focus:border-[#6B9B8C]'
+                        } border-0 focus:outline-none`}
+                        style={{ fontFamily: 'var(--font-mono)' }}
+                      />
+                    </div>
+                  ))}
                 </div>
               </div>
             );
