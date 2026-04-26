@@ -125,8 +125,8 @@ export default function App() {
         {/* Content Area */}
         <main className="flex-1 overflow-auto">
           {activeTab === 'weekly'    && <WeeklyView habits={habits} />}
-          {activeTab === 'monthly'   && <MonthlyView />}
-          {activeTab === 'analytics' && <AnalyticsView />}
+          {activeTab === 'monthly'   && <MonthlyView habits={habits} />}
+          {activeTab === 'analytics' && <AnalyticsView habits={habits} />}
           {activeTab === 'habits'    && <HabitsView habits={habits} setHabits={setHabits} />}
         </main>
       </div>

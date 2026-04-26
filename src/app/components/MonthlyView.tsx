@@ -3,90 +3,88 @@ import { CircularProgress } from './CircularProgress';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useDarkMode } from '../App';
+import type { Habit } from '../App';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 
-const MOCK_HABITS = [
-  'Morning Exercise',
-  'Read 30 minutes',
-  'Meditate',
-  'Drink 8 glasses of water',
-  'No social media before noon'
-];
+interface StoredHabit extends Habit { completed: boolean }
+interface StoredDayData { habits: StoredHabit[]; mood: number; motivation: number; }
 
 function getDaysInMonth(year: number, month: number): number {
   return new Date(year, month + 1, 0).getDate();
 }
 
-function generateMonthData(year: number, month: number) {
-  const daysInMonth = getDaysInMonth(year, month);
-  const habitData: Record<string, boolean[]> = {};
-
-  MOCK_HABITS.forEach(habit => {
-    habitData[habit] = Array.from({ length: daysInMonth }, () => Math.random() > 0.3);
-  });
-
-  const dailyCompletion = Array.from({ length: daysInMonth }, (_, i) => {
-    const day = i + 1;
-    let completed = 0;
-    MOCK_HABITS.forEach(habit => {
-      if (habitData[habit][i]) completed++;
-    });
-    return {
-      day,
-      completion: (completed / MOCK_HABITS.length) * 100
-    };
-  });
-
-  return { habitData, dailyCompletion };
+function toDateKey(year: number, month: number, day: number): string {
+  return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }
 
-export function MonthlyView() {
+interface MonthlyViewProps { habits: Habit[] }
+
+export function MonthlyView({ habits }: MonthlyViewProps) {
   const { isDark } = useDarkMode();
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [allDayData] = useLocalStorage<Record<string, StoredDayData>>('habitos-week-data', {});
+
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
-
-  const [monthData] = useState(() => generateMonthData(year, month));
   const daysInMonth = getDaysInMonth(year, month);
 
-  const previousMonth = () => {
-    const newDate = new Date(currentDate);
-    newDate.setMonth(currentDate.getMonth() - 1);
-    setCurrentDate(newDate);
+  const isHabitCompleted = (day: number, habitId: string): boolean => {
+    const stored = allDayData[toDateKey(year, month, day)];
+    return stored?.habits?.find(h => h.id === habitId)?.completed ?? false;
   };
 
-  const nextMonth = () => {
-    const newDate = new Date(currentDate);
-    newDate.setMonth(currentDate.getMonth() + 1);
-    setCurrentDate(newDate);
+  const getDayCompletion = (day: number): number => {
+    if (habits.length === 0) return 0;
+    const completed = habits.filter(h => isHabitCompleted(day, h.id)).length;
+    return (completed / habits.length) * 100;
   };
 
-  const getMonthCompletion = () => {
-    const total = monthData.dailyCompletion.reduce((sum, day) => sum + day.completion, 0);
-    return total / monthData.dailyCompletion.length;
+  const getMonthCompletion = (): number => {
+    if (daysInMonth === 0 || habits.length === 0) return 0;
+    const sum = Array.from({ length: daysInMonth }, (_, i) => getDayCompletion(i + 1))
+      .reduce((a, b) => a + b, 0);
+    return sum / daysInMonth;
   };
 
-  const getCurrentStreak = () => {
+  const getCurrentStreak = (): number => {
     let streak = 0;
-    for (let i = monthData.dailyCompletion.length - 1; i >= 0; i--) {
-      if (monthData.dailyCompletion[i].completion >= 80) {
-        streak++;
-      } else {
-        break;
-      }
+    for (let day = daysInMonth; day >= 1; day--) {
+      if (getDayCompletion(day) >= 80) streak++;
+      else break;
     }
     return streak;
   };
 
-  const getBestDay = () => {
-    const best = monthData.dailyCompletion.reduce((max, day) =>
-      day.completion > max.completion ? day : max
-    );
-    return best.day;
+  const getBestDay = (): number | string => {
+    let best = -1, bestDayNum = 0;
+    for (let day = 1; day <= daysInMonth; day++) {
+      const c = getDayCompletion(day);
+      if (c > best) { best = c; bestDayNum = day; }
+    }
+    return best > 0 ? bestDayNum : '—';
   };
 
-  const getHabitCompletion = (habit: string) => {
-    const completed = monthData.habitData[habit].filter(Boolean).length;
+  const getHabitMonthCompletion = (habitId: string): number => {
+    const completed = Array.from({ length: daysInMonth }, (_, i) =>
+      isHabitCompleted(i + 1, habitId)
+    ).filter(Boolean).length;
     return (completed / daysInMonth) * 100;
+  };
+
+  const dailyCompletionData = Array.from({ length: daysInMonth }, (_, i) => ({
+    day: i + 1,
+    completion: getDayCompletion(i + 1),
+  }));
+
+  const previousMonth = () => {
+    const d = new Date(currentDate);
+    d.setMonth(d.getMonth() - 1);
+    setCurrentDate(d);
+  };
+  const nextMonth = () => {
+    const d = new Date(currentDate);
+    d.setMonth(d.getMonth() + 1);
+    setCurrentDate(d);
   };
 
   return (
@@ -179,89 +177,92 @@ export function MonthlyView() {
         <h3 className={`font-semibold text-lg mb-4 ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>
           Habit Completion Matrix
         </h3>
-        <table className="w-full border-collapse">
-          <thead>
-            <tr>
-              <th className={`text-left p-2 border-b font-medium text-sm sticky left-0 z-10 ${
-                isDark
-                  ? 'border-[#3A4A5E] bg-[#243347] text-[#E8E6E0]'
-                  : 'border-[#D4D2CA] bg-white text-[#2D2D2D]'
-              }`}>
-                Habit
-              </th>
-              {Array.from({ length: daysInMonth }, (_, i) => (
-                <th key={i} className={`text-center p-2 border-b font-medium text-xs min-w-[32px] ${
-                  isDark ? 'border-[#3A4A5E] text-[#9B9B9B]' : 'border-[#D4D2CA] text-[#6B6B6B]'
+        {habits.length === 0 ? (
+          <p className={`text-sm py-4 ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>
+            No habits yet. Add habits to track them here.
+          </p>
+        ) : (
+          <table className="w-full border-collapse">
+            <thead>
+              <tr>
+                <th className={`text-left p-2 border-b font-medium text-sm sticky left-0 z-10 ${
+                  isDark
+                    ? 'border-[#3A4A5E] bg-[#243347] text-[#E8E6E0]'
+                    : 'border-[#D4D2CA] bg-white text-[#2D2D2D]'
                 }`}>
-                  {i + 1}
+                  Habit
                 </th>
-              ))}
-              <th className={`p-2 border-b font-medium text-sm sticky right-0 z-10 ${
-                isDark
-                  ? 'border-[#3A4A5E] bg-[#243347] text-[#E8E6E0]'
-                  : 'border-[#D4D2CA] bg-white text-[#2D2D2D]'
-              }`}>
-                Progress
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {MOCK_HABITS.map((habit) => {
-              const completion = getHabitCompletion(habit);
-              return (
-                <tr key={habit} className={isDark ? 'hover:bg-[#2D3E54]/30' : 'hover:bg-[#F8F7F4]'}>
-                  <td className={`p-2 border-b text-sm sticky left-0 z-10 font-medium ${
-                    isDark
-                      ? 'border-[#3A4A5E] bg-[#243347] text-[#E8E6E0]'
-                      : 'border-[#D4D2CA] bg-white text-[#2D2D2D]'
+                {Array.from({ length: daysInMonth }, (_, i) => (
+                  <th key={i} className={`text-center p-2 border-b font-medium text-xs min-w-[32px] ${
+                    isDark ? 'border-[#3A4A5E] text-[#9B9B9B]' : 'border-[#D4D2CA] text-[#6B6B6B]'
                   }`}>
-                    {habit}
-                  </td>
-                  {monthData.habitData[habit].map((completed, dayIndex) => (
-                    <td key={dayIndex} className={`p-2 border-b ${
-                      isDark ? 'border-[#3A4A5E]' : 'border-[#D4D2CA]'
+                    {i + 1}
+                  </th>
+                ))}
+                <th className={`p-2 border-b font-medium text-sm sticky right-0 z-10 ${
+                  isDark
+                    ? 'border-[#3A4A5E] bg-[#243347] text-[#E8E6E0]'
+                    : 'border-[#D4D2CA] bg-white text-[#2D2D2D]'
+                }`}>
+                  Progress
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {habits.map((habit) => {
+                const completion = getHabitMonthCompletion(habit.id);
+                return (
+                  <tr key={habit.id} className={isDark ? 'hover:bg-[#2D3E54]/30' : 'hover:bg-[#F8F7F4]'}>
+                    <td className={`p-2 border-b text-sm sticky left-0 z-10 font-medium ${
+                      isDark
+                        ? 'border-[#3A4A5E] bg-[#243347] text-[#E8E6E0]'
+                        : 'border-[#D4D2CA] bg-white text-[#2D2D2D]'
                     }`}>
-                      <div className="flex justify-center">
-                        <div
-                          className={`w-3 h-3 rounded ${
-                            completed
-                              ? isDark
-                                ? 'bg-[#7AA897]'
-                                : 'bg-[#6B9B8C]'
-                              : isDark
-                                ? 'bg-[#2D3E54]'
-                                : 'bg-[#E8E6E0]'
-                          }`}
-                        />
+                      {habit.name}
+                    </td>
+                    {Array.from({ length: daysInMonth }, (_, i) => {
+                      const completed = isHabitCompleted(i + 1, habit.id);
+                      return (
+                        <td key={i} className={`p-2 border-b ${
+                          isDark ? 'border-[#3A4A5E]' : 'border-[#D4D2CA]'
+                        }`}>
+                          <div className="flex justify-center">
+                            <div className={`w-3 h-3 rounded ${
+                              completed
+                                ? isDark ? 'bg-[#7AA897]' : 'bg-[#6B9B8C]'
+                                : isDark ? 'bg-[#2D3E54]' : 'bg-[#E8E6E0]'
+                            }`} />
+                          </div>
+                        </td>
+                      );
+                    })}
+                    <td className={`p-2 border-b sticky right-0 z-10 ${
+                      isDark
+                        ? 'border-[#3A4A5E] bg-[#243347]'
+                        : 'border-[#D4D2CA] bg-white'
+                    }`}>
+                      <div className="flex items-center gap-2">
+                        <div className={`flex-1 rounded-full h-2 overflow-hidden ${
+                          isDark ? 'bg-[#2D3E54]' : 'bg-[#E8E6E0]'
+                        }`}>
+                          <div
+                            className={isDark ? 'bg-[#7AA897] h-full transition-all' : 'bg-[#6B9B8C] h-full transition-all'}
+                            style={{ width: `${completion}%` }}
+                          />
+                        </div>
+                        <span className={`text-xs font-medium min-w-[40px] text-right ${
+                          isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'
+                        }`} style={{ fontFamily: 'var(--font-mono)' }}>
+                          {Math.round(completion)}%
+                        </span>
                       </div>
                     </td>
-                  ))}
-                  <td className={`p-2 border-b sticky right-0 z-10 ${
-                    isDark
-                      ? 'border-[#3A4A5E] bg-[#243347]'
-                      : 'border-[#D4D2CA] bg-white'
-                  }`}>
-                    <div className="flex items-center gap-2">
-                      <div className={`flex-1 rounded-full h-2 overflow-hidden ${
-                        isDark ? 'bg-[#2D3E54]' : 'bg-[#E8E6E0]'
-                      }`}>
-                        <div
-                          className={isDark ? 'bg-[#7AA897] h-full transition-all' : 'bg-[#6B9B8C] h-full transition-all'}
-                          style={{ width: `${completion}%` }}
-                        />
-                      </div>
-                      <span className={`text-xs font-medium min-w-[40px] text-right ${
-                        isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'
-                      }`} style={{ fontFamily: 'var(--font-mono)' }}>
-                        {Math.round(completion)}%
-                      </span>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
       </div>
 
       {/* Monthly Trend Chart */}
@@ -273,17 +274,16 @@ export function MonthlyView() {
         <h3 className={`font-semibold text-lg mb-4 ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>
           Daily Completion Trend
         </h3>
-        <ResponsiveContainer width="100%" height={300} key="monthly-chart-container">
-          <AreaChart data={monthData.dailyCompletion} id="monthly-completion-chart">
+        <ResponsiveContainer width="100%" height={300}>
+          <AreaChart data={dailyCompletionData}>
             <defs>
               <linearGradient id="monthlyColorCompletion" x1="0" y1="0" x2="0" y2="1">
-                <stop key="monthly-stop-1" offset="5%" stopColor={isDark ? '#7AA897' : '#6B9B8C'} stopOpacity={0.2}/>
-                <stop key="monthly-stop-2" offset="95%" stopColor={isDark ? '#7AA897' : '#6B9B8C'} stopOpacity={0}/>
+                <stop offset="5%" stopColor={isDark ? '#7AA897' : '#6B9B8C'} stopOpacity={0.2}/>
+                <stop offset="95%" stopColor={isDark ? '#7AA897' : '#6B9B8C'} stopOpacity={0}/>
               </linearGradient>
             </defs>
-            <CartesianGrid key="monthly-grid" strokeDasharray="3 3" stroke={isDark ? '#3A4A5E' : '#D4D2CA'} />
+            <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#3A4A5E' : '#D4D2CA'} />
             <XAxis
-              key="monthly-xaxis"
               dataKey="day"
               stroke={isDark ? '#9B9B9B' : '#6B6B6B'}
               fontSize={12}
@@ -291,7 +291,6 @@ export function MonthlyView() {
               style={{ fontFamily: 'var(--font-mono)' }}
             />
             <YAxis
-              key="monthly-yaxis"
               stroke={isDark ? '#9B9B9B' : '#6B6B6B'}
               fontSize={12}
               tickLine={false}
@@ -300,7 +299,6 @@ export function MonthlyView() {
               style={{ fontFamily: 'var(--font-mono)' }}
             />
             <Tooltip
-              key="monthly-tooltip"
               contentStyle={{
                 backgroundColor: isDark ? '#243347' : 'white',
                 border: `1px solid ${isDark ? '#3A4A5E' : '#D4D2CA'}`,
@@ -311,7 +309,6 @@ export function MonthlyView() {
               formatter={(value: number) => [`${value.toFixed(1)}%`, 'Completion']}
             />
             <Area
-              key="monthly-area"
               type="monotone"
               dataKey="completion"
               stroke={isDark ? '#7AA897' : '#6B9B8C'}

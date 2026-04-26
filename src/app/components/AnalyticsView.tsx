@@ -1,52 +1,100 @@
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useDarkMode } from '../App';
+import type { Habit } from '../App';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 
-const MOCK_HABITS = [
-  { id: '1', name: 'Morning Exercise' },
-  { id: '2', name: 'Read 30 minutes' },
-  { id: '3', name: 'Meditate' },
-  { id: '4', name: 'Drink 8 glasses of water' },
-  { id: '5', name: 'No social media before noon' }
-];
+interface StoredHabit extends Habit { completed: boolean }
+interface StoredDayData { habits: StoredHabit[]; mood: number; motivation: number; }
 
-function generateLast30Days() {
-  return Array.from({ length: 30 }, (_, i) => {
-    const date = new Date();
-    date.setDate(date.getDate() - (29 - i));
-    return {
-      date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      completion: Math.random() * 40 + 60,
-      mood: Math.random() * 4 + 6,
-      motivation: Math.random() * 4 + 5
-    };
-  });
+function toDateKey(date: Date): string {
+  return date.toISOString().split('T')[0];
 }
 
-function generateHabitStats() {
-  return MOCK_HABITS.map(habit => {
-    const currentStreak = Math.floor(Math.random() * 15) + 1;
-    const bestStreak = currentStreak + Math.floor(Math.random() * 10);
-    const completion = Math.random() * 30 + 70;
-    return {
-      ...habit,
-      currentStreak,
-      bestStreak,
-      completion
-    };
-  });
-}
+interface AnalyticsViewProps { habits: Habit[] }
 
-export function AnalyticsView() {
+export function AnalyticsView({ habits }: AnalyticsViewProps) {
   const { isDark } = useDarkMode();
-  const last30Days = generateLast30Days();
-  const habitStats = generateHabitStats();
+  const [allDayData] = useLocalStorage<Record<string, StoredDayData>>('habitos-week-data', {});
 
-  const avgCompletion = last30Days.reduce((sum, day) => sum + day.completion, 0) / last30Days.length;
-  const avgMood = last30Days.reduce((sum, day) => sum + day.mood, 0) / last30Days.length;
-  const avgMotivation = last30Days.reduce((sum, day) => sum + day.motivation, 0) / last30Days.length;
+  // Last 30 days — most recent on the right
+  const last30Days = Array.from({ length: 30 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (29 - i));
+    const key = toDateKey(d);
+    const stored = allDayData[key];
+    const completedCount = stored?.habits
+      ? habits.filter(h => stored.habits.find(sh => sh.id === h.id)?.completed).length
+      : 0;
+    const completion = habits.length > 0 ? (completedCount / habits.length) * 100 : 0;
+    return {
+      date: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      completion,
+      mood: stored?.mood ?? 0,
+      motivation: stored?.motivation ?? 0,
+      tracked: !!stored,
+    };
+  });
 
-  const longestStreak = Math.max(...habitStats.map(h => h.bestStreak));
-  const totalHabits = MOCK_HABITS.length;
+  // Per-habit stats derived from all stored data
+  const habitStats = habits.map(habit => {
+    const sortedKeys = Object.keys(allDayData).sort();
+
+    // Current streak: from today backward through consecutive calendar days
+    let currentStreak = 0;
+    const today = new Date();
+    for (let i = 0; i < 365; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      const key = toDateKey(d);
+      const completed = allDayData[key]?.habits?.find(h => h.id === habit.id)?.completed ?? false;
+      if (completed) currentStreak++;
+      else break;
+    }
+
+    // Best streak: longest run of consecutive completed days in all stored data
+    let bestStreak = 0, run = 0;
+    for (let i = 0; i < sortedKeys.length; i++) {
+      const key = sortedKeys[i];
+      const completed = allDayData[key]?.habits?.find(h => h.id === habit.id)?.completed ?? false;
+      if (completed) {
+        const isConsecutive = i > 0 && (() => {
+          const prev = new Date(sortedKeys[i - 1]);
+          const curr = new Date(key);
+          return Math.round((curr.getTime() - prev.getTime()) / 86400000) === 1;
+        })();
+        run = (i === 0 || isConsecutive) ? run + 1 : 1;
+      } else {
+        run = 0;
+      }
+      bestStreak = Math.max(bestStreak, run);
+    }
+    bestStreak = Math.max(bestStreak, currentStreak);
+
+    // Completion % over all days this habit appears in stored data
+    const daysWithHabit = sortedKeys.filter(k =>
+      allDayData[k]?.habits?.some(h => h.id === habit.id)
+    );
+    const completionPct = daysWithHabit.length > 0
+      ? (daysWithHabit.filter(k =>
+          allDayData[k]?.habits?.find(h => h.id === habit.id)?.completed
+        ).length / daysWithHabit.length) * 100
+      : 0;
+
+    return { ...habit, currentStreak, bestStreak, completion: completionPct };
+  });
+
+  // Aggregate stats
+  const avgCompletion = last30Days.reduce((sum, d) => sum + d.completion, 0) / 30;
+  const trackedDays = last30Days.filter(d => d.tracked);
+  const avgMood = trackedDays.length > 0
+    ? trackedDays.reduce((sum, d) => sum + d.mood, 0) / trackedDays.length
+    : 0;
+  const avgMotivation = trackedDays.length > 0
+    ? trackedDays.reduce((sum, d) => sum + d.motivation, 0) / trackedDays.length
+    : 0;
+  const longestStreak = habitStats.length > 0
+    ? Math.max(...habitStats.map(h => h.bestStreak))
+    : 0;
 
   return (
     <div className="p-6">
@@ -85,7 +133,7 @@ export function AnalyticsView() {
         }`} style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
           <div className={`text-3xl font-semibold ${isDark ? 'text-[#7AA897]' : 'text-[#6B9B8C]'}`}
                style={{ fontFamily: 'var(--font-mono)' }}>
-            {totalHabits}
+            {habits.length}
           </div>
           <div className={`text-sm mt-1 ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>
             Active Habits
@@ -102,17 +150,16 @@ export function AnalyticsView() {
         <h3 className={`font-semibold text-lg mb-4 ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>
           Last 30 Days Habit Completion
         </h3>
-        <ResponsiveContainer width="100%" height={300} key="analytics-completion-container">
-          <AreaChart data={last30Days} id="analytics-completion-chart">
+        <ResponsiveContainer width="100%" height={300}>
+          <AreaChart data={last30Days}>
             <defs>
               <linearGradient id="analyticsColorCompletion30" x1="0" y1="0" x2="0" y2="1">
-                <stop key="analytics-completion-stop-1" offset="5%" stopColor={isDark ? '#7AA897' : '#6B9B8C'} stopOpacity={0.2}/>
-                <stop key="analytics-completion-stop-2" offset="95%" stopColor={isDark ? '#7AA897' : '#6B9B8C'} stopOpacity={0}/>
+                <stop offset="5%" stopColor={isDark ? '#7AA897' : '#6B9B8C'} stopOpacity={0.2}/>
+                <stop offset="95%" stopColor={isDark ? '#7AA897' : '#6B9B8C'} stopOpacity={0}/>
               </linearGradient>
             </defs>
-            <CartesianGrid key="analytics-completion-grid" strokeDasharray="3 3" stroke={isDark ? '#3A4A5E' : '#D4D2CA'} />
+            <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#3A4A5E' : '#D4D2CA'} />
             <XAxis
-              key="analytics-completion-xaxis"
               dataKey="date"
               stroke={isDark ? '#9B9B9B' : '#6B6B6B'}
               fontSize={11}
@@ -121,7 +168,6 @@ export function AnalyticsView() {
               style={{ fontFamily: 'var(--font-mono)' }}
             />
             <YAxis
-              key="analytics-completion-yaxis"
               stroke={isDark ? '#9B9B9B' : '#6B6B6B'}
               fontSize={12}
               tickLine={false}
@@ -130,7 +176,6 @@ export function AnalyticsView() {
               style={{ fontFamily: 'var(--font-mono)' }}
             />
             <Tooltip
-              key="analytics-completion-tooltip"
               contentStyle={{
                 backgroundColor: isDark ? '#243347' : 'white',
                 border: `1px solid ${isDark ? '#3A4A5E' : '#D4D2CA'}`,
@@ -141,7 +186,6 @@ export function AnalyticsView() {
               formatter={(value: number) => [`${value.toFixed(1)}%`, 'Completion']}
             />
             <Area
-              key="analytics-completion-area"
               type="monotone"
               dataKey="completion"
               stroke={isDark ? '#7AA897' : '#6B9B8C'}
@@ -162,39 +206,45 @@ export function AnalyticsView() {
         <h3 className={`font-semibold text-lg mb-4 ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>
           Habit Performance
         </h3>
-        <div className="space-y-4">
-          {habitStats.map((habit) => (
-            <div key={habit.id} className={`pb-4 last:border-0 border-b ${
-              isDark ? 'border-[#3A4A5E]' : 'border-[#D4D2CA]'
-            }`}>
-              <div className="flex items-center justify-between mb-2">
-                <div className={`font-medium ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>
-                  {habit.name}
+        {habitStats.length === 0 ? (
+          <p className={`text-sm py-4 ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>
+            No habits yet. Add habits to see performance data here.
+          </p>
+        ) : (
+          <div className="space-y-4">
+            {habitStats.map((habit) => (
+              <div key={habit.id} className={`pb-4 last:border-0 border-b ${
+                isDark ? 'border-[#3A4A5E]' : 'border-[#D4D2CA]'
+              }`}>
+                <div className="flex items-center justify-between mb-2">
+                  <div className={`font-medium ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>
+                    {habit.name}
+                  </div>
+                  <div className={`flex items-center gap-4 text-sm ${
+                    isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'
+                  }`}>
+                    <span>Current: <span style={{ fontFamily: 'var(--font-mono)' }}>{habit.currentStreak}</span> days</span>
+                    <span>Best: <span style={{ fontFamily: 'var(--font-mono)' }}>{habit.bestStreak}</span> days</span>
+                    <span className={`font-semibold ${isDark ? 'text-[#7AA897]' : 'text-[#6B9B8C]'}`}
+                          style={{ fontFamily: 'var(--font-mono)' }}>
+                      {Math.round(habit.completion)}%
+                    </span>
+                  </div>
                 </div>
-                <div className={`flex items-center gap-4 text-sm ${
-                  isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'
-                }`}>
-                  <span>Current: <span style={{ fontFamily: 'var(--font-mono)' }}>{habit.currentStreak}</span> days</span>
-                  <span>Best: <span style={{ fontFamily: 'var(--font-mono)' }}>{habit.bestStreak}</span> days</span>
-                  <span className={`font-semibold ${isDark ? 'text-[#7AA897]' : 'text-[#6B9B8C]'}`}
-                        style={{ fontFamily: 'var(--font-mono)' }}>
-                    {Math.round(habit.completion)}%
-                  </span>
+                <div className="flex items-center gap-2">
+                  <div className={`flex-1 rounded-full h-2 overflow-hidden ${
+                    isDark ? 'bg-[#2D3E54]' : 'bg-[#E8E6E0]'
+                  }`}>
+                    <div
+                      className={isDark ? 'bg-[#7AA897] h-full transition-all' : 'bg-[#6B9B8C] h-full transition-all'}
+                      style={{ width: `${habit.completion}%` }}
+                    />
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <div className={`flex-1 rounded-full h-2 overflow-hidden ${
-                  isDark ? 'bg-[#2D3E54]' : 'bg-[#E8E6E0]'
-                }`}>
-                  <div
-                    className={isDark ? 'bg-[#7AA897] h-full transition-all' : 'bg-[#6B9B8C] h-full transition-all'}
-                    style={{ width: `${habit.completion}%` }}
-                  />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Mood Tracking */}
@@ -207,22 +257,24 @@ export function AnalyticsView() {
           Mood Tracking (Last 30 Days)
         </h3>
         <div className={`text-sm mb-4 ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>
-          Average: <span className={`font-semibold ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}
-                         style={{ fontFamily: 'var(--font-mono)' }}>
-            {avgMood.toFixed(1)}/10
-          </span>
+          {trackedDays.length > 0
+            ? <>Average: <span className={`font-semibold ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}
+                               style={{ fontFamily: 'var(--font-mono)' }}>
+                {avgMood.toFixed(1)}/10
+              </span></>
+            : 'No tracked days yet.'
+          }
         </div>
-        <ResponsiveContainer width="100%" height={250} key="analytics-mood-container">
-          <AreaChart data={last30Days} id="analytics-mood-chart">
+        <ResponsiveContainer width="100%" height={250}>
+          <AreaChart data={last30Days}>
             <defs>
               <linearGradient id="analyticsMoodGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop key="analytics-mood-stop-1" offset="5%" stopColor={isDark ? '#7AA897' : '#6B9B8C'} stopOpacity={0.2}/>
-                <stop key="analytics-mood-stop-2" offset="95%" stopColor={isDark ? '#7AA897' : '#6B9B8C'} stopOpacity={0}/>
+                <stop offset="5%" stopColor={isDark ? '#7AA897' : '#6B9B8C'} stopOpacity={0.2}/>
+                <stop offset="95%" stopColor={isDark ? '#7AA897' : '#6B9B8C'} stopOpacity={0}/>
               </linearGradient>
             </defs>
-            <CartesianGrid key="analytics-mood-grid" strokeDasharray="3 3" stroke={isDark ? '#3A4A5E' : '#D4D2CA'} />
+            <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#3A4A5E' : '#D4D2CA'} />
             <XAxis
-              key="analytics-mood-xaxis"
               dataKey="date"
               stroke={isDark ? '#9B9B9B' : '#6B6B6B'}
               fontSize={11}
@@ -231,7 +283,6 @@ export function AnalyticsView() {
               style={{ fontFamily: 'var(--font-mono)' }}
             />
             <YAxis
-              key="analytics-mood-yaxis"
               stroke={isDark ? '#9B9B9B' : '#6B6B6B'}
               fontSize={12}
               tickLine={false}
@@ -239,7 +290,6 @@ export function AnalyticsView() {
               style={{ fontFamily: 'var(--font-mono)' }}
             />
             <Tooltip
-              key="analytics-mood-tooltip"
               contentStyle={{
                 backgroundColor: isDark ? '#243347' : 'white',
                 border: `1px solid ${isDark ? '#3A4A5E' : '#D4D2CA'}`,
@@ -250,7 +300,6 @@ export function AnalyticsView() {
               formatter={(value: number) => [value.toFixed(1), 'Mood']}
             />
             <Area
-              key="analytics-mood-area"
               type="monotone"
               dataKey="mood"
               stroke={isDark ? '#7AA897' : '#6B9B8C'}
@@ -272,22 +321,24 @@ export function AnalyticsView() {
           Motivation Tracking (Last 30 Days)
         </h3>
         <div className={`text-sm mb-4 ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>
-          Average: <span className={`font-semibold ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}
-                         style={{ fontFamily: 'var(--font-mono)' }}>
-            {avgMotivation.toFixed(1)}/10
-          </span>
+          {trackedDays.length > 0
+            ? <>Average: <span className={`font-semibold ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}
+                               style={{ fontFamily: 'var(--font-mono)' }}>
+                {avgMotivation.toFixed(1)}/10
+              </span></>
+            : 'No tracked days yet.'
+          }
         </div>
-        <ResponsiveContainer width="100%" height={250} key="analytics-motivation-container">
-          <AreaChart data={last30Days} id="analytics-motivation-chart">
+        <ResponsiveContainer width="100%" height={250}>
+          <AreaChart data={last30Days}>
             <defs>
               <linearGradient id="analyticsMotivationGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop key="analytics-motivation-stop-1" offset="5%" stopColor={isDark ? '#7AA897' : '#6B9B8C'} stopOpacity={0.2}/>
-                <stop key="analytics-motivation-stop-2" offset="95%" stopColor={isDark ? '#7AA897' : '#6B9B8C'} stopOpacity={0}/>
+                <stop offset="5%" stopColor={isDark ? '#7AA897' : '#6B9B8C'} stopOpacity={0.2}/>
+                <stop offset="95%" stopColor={isDark ? '#7AA897' : '#6B9B8C'} stopOpacity={0}/>
               </linearGradient>
             </defs>
-            <CartesianGrid key="analytics-motivation-grid" strokeDasharray="3 3" stroke={isDark ? '#3A4A5E' : '#D4D2CA'} />
+            <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#3A4A5E' : '#D4D2CA'} />
             <XAxis
-              key="analytics-motivation-xaxis"
               dataKey="date"
               stroke={isDark ? '#9B9B9B' : '#6B6B6B'}
               fontSize={11}
@@ -296,7 +347,6 @@ export function AnalyticsView() {
               style={{ fontFamily: 'var(--font-mono)' }}
             />
             <YAxis
-              key="analytics-motivation-yaxis"
               stroke={isDark ? '#9B9B9B' : '#6B6B6B'}
               fontSize={12}
               tickLine={false}
@@ -304,7 +354,6 @@ export function AnalyticsView() {
               style={{ fontFamily: 'var(--font-mono)' }}
             />
             <Tooltip
-              key="analytics-motivation-tooltip"
               contentStyle={{
                 backgroundColor: isDark ? '#243347' : 'white',
                 border: `1px solid ${isDark ? '#3A4A5E' : '#D4D2CA'}`,
@@ -315,7 +364,6 @@ export function AnalyticsView() {
               formatter={(value: number) => [value.toFixed(1), 'Motivation']}
             />
             <Area
-              key="analytics-motivation-area"
               type="monotone"
               dataKey="motivation"
               stroke={isDark ? '#7AA897' : '#6B9B8C'}
