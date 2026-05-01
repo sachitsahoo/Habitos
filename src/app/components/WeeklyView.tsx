@@ -34,6 +34,15 @@ function getWeekDays(baseDate: Date): Date[] {
   return days;
 }
 
+// Returns only habits that were active on a given ISO date string ('YYYY-MM-DD').
+// Handles habits that predate the startDate field (undefined → treat as always active).
+function getHabitsForDate(allHabits: Habit[], dateKey: string): Habit[] {
+  return allHabits.filter(h => {
+    const start = h.startDate ?? '2000-01-01';
+    return start <= dateKey && (!h.endDate || h.endDate > dateKey);
+  });
+}
+
 function getDefaultDay(habits: Habit[]): StoredDayData {
   return {
     habits: habits.map(h => ({ ...h, completed: false })),
@@ -44,6 +53,25 @@ function getDefaultDay(habits: Habit[]): StoredDayData {
     mood: 5,
     motivation: 5,
   };
+}
+
+// Merge stored day data with the current habits list.
+// For today/future: live-syncs new/removed habits while preserving completion state.
+// For past days: returns the frozen snapshot unchanged.
+function getMergedDay(stored: StoredDayData | undefined, allHabits: Habit[], dateKey: string): StoredDayData {
+  if (!stored) return getDefaultDay(getHabitsForDate(allHabits, dateKey));
+
+  const today = new Date().toISOString().split('T')[0];
+  if (dateKey >= today) {
+    const activeHabits = getHabitsForDate(allHabits, dateKey);
+    const mergedHabits = activeHabits.map(h => {
+      const existing = stored.habits.find(dh => dh.id === h.id);
+      return existing ? { ...existing, name: h.name } : { ...h, completed: false };
+    });
+    return { ...stored, habits: mergedHabits };
+  }
+
+  return stored;
 }
 
 interface WeeklyViewProps {
@@ -58,31 +86,35 @@ export function WeeklyView({ habits }: WeeklyViewProps) {
   const parsedDate = new Date(currentDate);
   const weekDays = getWeekDays(parsedDate);
 
-  // When habits list changes, reconcile all stored day entries:
-  // - add new habits (uncompleted), remove deleted ones, update renamed ones
+  // When habits list changes, propagate renames only to stored days.
+  // Adding/archiving habits is date-aware and handled by getHabitsForDate instead.
   useEffect(() => {
     setWeekData(prev => {
       const keys = Object.keys(prev);
       if (keys.length === 0) return prev;
+      let anyChanged = false;
       const updated: Record<string, StoredDayData> = {};
       for (const key of keys) {
         const day = prev[key];
-        updated[key] = {
-          ...day,
-          habits: habits.map(h => {
-            const existing = day.habits.find(dh => dh.id === h.id);
-            return existing ? { ...existing, name: h.name } : { ...h, completed: false };
-          }),
-        };
+        let dayChanged = false;
+        const reconciledHabits = day.habits.map(dh => {
+          const master = habits.find(h => h.id === dh.id);
+          if (master && master.name !== dh.name) {
+            dayChanged = true;
+            anyChanged = true;
+            return { ...dh, name: master.name };
+          }
+          return dh;
+        });
+        updated[key] = dayChanged ? { ...day, habits: reconciledHabits } : day;
       }
-      return updated;
+      return anyChanged ? updated : prev;
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [habits]);
 
-  // Returns stored data for a day, or a fresh default (lazy — not written until first user action)
   const getDay = (dateKey: string): StoredDayData =>
-    weekData[dateKey] ?? getDefaultDay(habits);
+    getMergedDay(weekData[dateKey], habits, dateKey);
 
   const previousWeek = () => {
     const d = new Date(parsedDate);
@@ -119,10 +151,10 @@ export function WeeklyView({ habits }: WeeklyViewProps) {
     return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
   };
 
-  // Mutation helpers — all use lazy init via `?? getDefaultDay(habits)`
+  // Mutation helpers — all use lazy init via `?? getDefaultDay(getHabitsForDate(habits, dateKey))`
   const toggleHabit = (dateKey: string, habitId: string) => {
     setWeekData(prev => {
-      const day = prev[dateKey] ?? getDefaultDay(habits);
+      const day = getMergedDay(prev[dateKey], habits, dateKey);
       return {
         ...prev,
         [dateKey]: {
@@ -135,7 +167,7 @@ export function WeeklyView({ habits }: WeeklyViewProps) {
 
   const toggleTask = (dateKey: string, taskId: string) => {
     setWeekData(prev => {
-      const day = prev[dateKey] ?? getDefaultDay(habits);
+      const day = prev[dateKey] ?? getDefaultDay(getHabitsForDate(habits, dateKey));
       return {
         ...prev,
         [dateKey]: {
@@ -148,7 +180,7 @@ export function WeeklyView({ habits }: WeeklyViewProps) {
 
   const addTask = (dateKey: string) => {
     setWeekData(prev => {
-      const day = prev[dateKey] ?? getDefaultDay(habits);
+      const day = prev[dateKey] ?? getDefaultDay(getHabitsForDate(habits, dateKey));
       return {
         ...prev,
         [dateKey]: {
@@ -161,7 +193,7 @@ export function WeeklyView({ habits }: WeeklyViewProps) {
 
   const updateTask = (dateKey: string, taskId: string, text: string) => {
     setWeekData(prev => {
-      const day = prev[dateKey] ?? getDefaultDay(habits);
+      const day = prev[dateKey] ?? getDefaultDay(getHabitsForDate(habits, dateKey));
       return {
         ...prev,
         [dateKey]: {
@@ -174,7 +206,7 @@ export function WeeklyView({ habits }: WeeklyViewProps) {
 
   const deleteTask = (dateKey: string, taskId: string) => {
     setWeekData(prev => {
-      const day = prev[dateKey] ?? getDefaultDay(habits);
+      const day = prev[dateKey] ?? getDefaultDay(getHabitsForDate(habits, dateKey));
       return {
         ...prev,
         [dateKey]: { ...day, tasks: day.tasks.filter(t => t.id !== taskId) },
@@ -184,14 +216,14 @@ export function WeeklyView({ habits }: WeeklyViewProps) {
 
   const updateField = (dateKey: string, field: 'notes' | 'improvements' | 'gratitude', value: string) => {
     setWeekData(prev => {
-      const day = prev[dateKey] ?? getDefaultDay(habits);
+      const day = prev[dateKey] ?? getDefaultDay(getHabitsForDate(habits, dateKey));
       return { ...prev, [dateKey]: { ...day, [field]: value } };
     });
   };
 
   const updateNumber = (dateKey: string, field: 'mood' | 'motivation', value: number) => {
     setWeekData(prev => {
-      const day = prev[dateKey] ?? getDefaultDay(habits);
+      const day = prev[dateKey] ?? getDefaultDay(getHabitsForDate(habits, dateKey));
       return { ...prev, [dateKey]: { ...day, [field]: value } };
     });
   };
@@ -410,12 +442,27 @@ export function WeeklyView({ habits }: WeeklyViewProps) {
                         {field.charAt(0).toUpperCase() + field.slice(1)}
                       </label>
                       <input
-                        type="number"
-                        min="1"
-                        max="10"
+                        type="text"
+                        inputMode="numeric"
                         value={dayData[field]}
-                        onChange={(e) => updateNumber(dateKey, field, parseInt(e.target.value) || 5)}
-                        className={`w-full text-sm px-3 py-2 rounded-lg transition-all ${
+                        onKeyDown={(e) => {
+                          if (e.key >= '0' && e.key <= '9') {
+                            e.preventDefault();
+                            const digit = parseInt(e.key);
+                            const current = dayData[field];
+                            // "1" + "0" → 10
+                            if (current === 1 && digit === 0) {
+                              updateNumber(dateKey, field, 10);
+                            } else if (digit >= 1) {
+                              updateNumber(dateKey, field, digit);
+                            }
+                          } else if (!['Backspace', 'Tab', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                            e.preventDefault();
+                          }
+                        }}
+                        onFocus={(e) => e.target.select()}
+                        readOnly
+                        className={`w-full text-sm px-3 py-2 rounded-lg transition-all cursor-default ${
                           isDark
                             ? 'bg-[#1A2332] text-[#E8E6E0] focus:border-b-2 focus:border-[#7AA897]'
                             : 'bg-[#F8F7F4] text-[#2D2D2D] focus:border-b-2 focus:border-[#6B9B8C]'

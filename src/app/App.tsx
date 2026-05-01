@@ -12,14 +12,16 @@ export type Tab = 'weekly' | 'monthly' | 'analytics' | 'habits';
 export interface Habit {
   id: string;
   name: string;
+  startDate: string;   // 'YYYY-MM-DD' — day the habit was added
+  endDate?: string;    // 'YYYY-MM-DD' — day archived (soft delete), omitted if active
 }
 
 export const INITIAL_HABITS: Habit[] = [
-  { id: '1', name: 'Morning Exercise' },
-  { id: '2', name: 'Read 30 minutes' },
-  { id: '3', name: 'Meditate' },
-  { id: '4', name: 'Drink 8 glasses of water' },
-  { id: '5', name: 'No social media before noon' },
+  { id: '1', name: 'Morning Exercise',          startDate: '2000-01-01' },
+  { id: '2', name: 'Read 30 minutes',           startDate: '2000-01-01' },
+  { id: '3', name: 'Meditate',                  startDate: '2000-01-01' },
+  { id: '4', name: 'Drink 8 glasses of water',  startDate: '2000-01-01' },
+  { id: '5', name: 'No social media before noon', startDate: '2000-01-01' },
 ];
 
 const DarkModeContext = createContext({ isDark: false, toggleDark: () => {} });
@@ -32,6 +34,15 @@ export default function App() {
   const [habits, setHabits] = useLocalStorage<Habit[]>('habitos-habits', INITIAL_HABITS);
 
   const toggleDark = () => setIsDark(prev => !prev);
+
+  // One-time migration: patch habits from before startDate field existed
+  useEffect(() => {
+    setHabits(prev => {
+      if (!prev.some(h => !h.startDate)) return prev;
+      return prev.map(h => h.startDate ? h : { ...h, startDate: '2000-01-01' });
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Keep .dark class on <html> in sync so shadcn dark: utilities activate
   useEffect(() => {
@@ -125,8 +136,8 @@ export default function App() {
         {/* Content Area */}
         <main className="flex-1 overflow-auto">
           {activeTab === 'weekly'    && <WeeklyView habits={habits} />}
-          {activeTab === 'monthly'   && <MonthlyView habits={habits} />}
-          {activeTab === 'analytics' && <AnalyticsView habits={habits} />}
+          {activeTab === 'monthly'   && <MonthlyView habits={habits.filter(h => !h.endDate)} />}
+          {activeTab === 'analytics' && <AnalyticsView habits={habits.filter(h => !h.endDate)} />}
           {activeTab === 'habits'    && <HabitsView habits={habits} setHabits={setHabits} />}
         </main>
       </div>
