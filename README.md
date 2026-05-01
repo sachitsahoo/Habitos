@@ -1,7 +1,7 @@
 
   # HabitOS
 
-  This is a code bundle for HabitOS. The original project is available at https://www.figma.com/design/TT6tRg5U3BGJtxG2ZrJtBG/HabitOS.
+  This is a habit tracking project I build for myself to help organize the tasks and habits in my life. The visualization helps boost motivation and gratification, treating basic habits as things I get to check off the list. 
 
   ## Running the code
 
