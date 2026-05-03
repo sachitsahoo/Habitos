@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CircularProgress } from './CircularProgress';
 import { ChevronLeft, ChevronRight, Plus, X } from 'lucide-react';
 import { useDarkMode } from '../context/DarkModeContext';
 import { useHabitLogs } from '../../hooks/useHabitLogs';
 import { useTasks } from '../../hooks/useTasks';
 import { useDailyLogs } from '../../hooks/useDailyLogs';
+import { useWindowWidth } from '../../hooks/useWindowWidth';
 import type { Habit } from '../App';
 
 interface WeeklyViewProps {
@@ -27,32 +28,60 @@ function toDateKey(d: Date) {
 
 export function WeeklyView({ habits }: WeeklyViewProps) {
   const { isDark } = useDarkMode();
-  const [currentDate, setCurrentDate] = useState(new Date().toISOString());
+  const width = useWindowWidth();
+  const daysToShow = width < 640 ? 1 : width < 1024 ? 2 : 3;
 
+  const [currentDate, setCurrentDate] = useState(new Date().toISOString());
   const parsedDate = new Date(currentDate);
   const weekDays = getWeekDays(parsedDate);
   const startDate = toDateKey(weekDays[0]);
-  const endDate = toDateKey(weekDays[6]);
+  const endDate   = toDateKey(weekDays[6]);
+
+  // Start on the group that contains today (or 0 if viewing another week)
+  const [groupStart, setGroupStart] = useState(() => {
+    const todayKey = toDateKey(new Date());
+    const idx = weekDays.findIndex(d => toDateKey(d) === todayKey);
+    if (idx < 0) return 0;
+    return Math.min(Math.floor(idx / daysToShow) * daysToShow, Math.max(0, 7 - daysToShow));
+  });
+
+  // Clamp groupStart whenever daysToShow changes (window resize)
+  useEffect(() => {
+    setGroupStart(prev => Math.min(prev, Math.max(0, 7 - daysToShow)));
+  }, [daysToShow]);
 
   const { completions, toggleLog } = useHabitLogs(startDate, endDate);
   const { tasksByDate, addTask, updateTask, toggleTask, deleteTask } = useTasks(startDate, endDate);
   const { logsByDate, updateLog } = useDailyLogs(startDate, endDate);
 
+  const visibleDays = weekDays.slice(groupStart, groupStart + daysToShow);
+  const canGoPrev   = groupStart > 0;
+  const canGoNext   = groupStart + daysToShow < 7;
+
+  const goPrev = () => setGroupStart(prev => Math.max(0, prev - daysToShow));
+  const goNext = () => setGroupStart(prev => Math.min(7 - daysToShow, prev + daysToShow));
+
   const previousWeek = () => {
     const d = new Date(parsedDate);
     d.setDate(d.getDate() - 7);
     setCurrentDate(d.toISOString());
+    setGroupStart(0);
   };
 
   const nextWeek = () => {
     const d = new Date(parsedDate);
     d.setDate(d.getDate() + 7);
     setCurrentDate(d.toISOString());
+    setGroupStart(0);
   };
 
   const formatDateRange = () => {
     const start = weekDays[0];
-    const end = weekDays[6];
+    const end   = weekDays[6];
+    // Shorter on mobile (no year), full on desktop
+    if (width < 640) {
+      return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+    }
     return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
   };
 
@@ -61,13 +90,25 @@ export function WeeklyView({ habits }: WeeklyViewProps) {
     for (const day of weekDays) {
       const dayCompletions = completions[toDateKey(day)] ?? {};
       total += habits.length;
-      done += habits.filter(h => dayCompletions[h.id]).length;
+      done  += habits.filter(h => dayCompletions[h.id]).length;
     }
     return total > 0 ? (done / total) * 100 : 0;
   };
 
+  // Shared style helpers
+  const navBtnClass = (active: boolean) =>
+    `p-2 rounded-lg transition-colors flex-shrink-0 ${
+      active
+        ? isDark
+          ? 'bg-[#243347] hover:bg-[#2D3E54] text-[#E8E6E0]'
+          : 'bg-white hover:bg-[#E8E6E0] text-[#2D2D2D]'
+        : `opacity-20 cursor-default ${isDark ? 'bg-[#243347] text-[#9B9B9B]' : 'bg-white text-[#9B9B9B]'}`
+    }`;
+
   const inputClass = (extra = '') =>
-    `w-full text-sm px-3 py-2 rounded-lg resize-none border-0 focus:outline-none transition-all ${
+    `w-full px-3 py-2 rounded-lg resize-none border-0 focus:outline-none transition-all ${
+      daysToShow === 1 ? 'text-base' : 'text-sm'
+    } ${
       isDark
         ? 'bg-[#1A2332] text-[#E8E6E0] placeholder-[#9B9B9B] focus:border-b-2 focus:border-[#7AA897]'
         : 'bg-[#F8F7F4] text-[#2D2D2D] placeholder-[#6B6B6B] focus:border-b-2 focus:border-[#6B9B8C]'
@@ -81,81 +122,101 @@ export function WeeklyView({ habits }: WeeklyViewProps) {
     }`;
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       {/* Week Navigation */}
-      <div className="mb-6 flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      <div className="mb-4 sm:mb-6 flex items-center justify-between">
+        <div className="flex items-center gap-2 sm:gap-4">
           <button
             onClick={previousWeek}
-            className={`p-2 rounded-lg transition-colors ${
-              isDark ? 'bg-[#243347] hover:bg-[#2D3E54] text-[#E8E6E0]' : 'bg-white hover:bg-[#E8E6E0] text-[#2D2D2D]'
-            }`}
+            className={navBtnClass(true)}
             style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
-          <span className={`font-semibold text-xl ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>
+          <span className={`font-semibold text-sm sm:text-xl ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>
             {formatDateRange()}
           </span>
           <button
             onClick={nextWeek}
-            className={`p-2 rounded-lg transition-colors ${
-              isDark ? 'bg-[#243347] hover:bg-[#2D3E54] text-[#E8E6E0]' : 'bg-white hover:bg-[#E8E6E0] text-[#2D2D2D]'
-            }`}
+            className={navBtnClass(true)}
             style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}
           >
             <ChevronRight className="w-5 h-5" />
           </button>
         </div>
-        <div className={`p-4 rounded-lg ${isDark ? 'bg-[#243347]' : 'bg-white'}`}
+        <div className={`p-3 sm:p-4 rounded-lg ${isDark ? 'bg-[#243347]' : 'bg-white'}`}
              style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
-          <CircularProgress percentage={getWeekCompletion()} size={80} strokeWidth={6} />
+          <CircularProgress percentage={getWeekCompletion()} size={width < 640 ? 48 : 60} strokeWidth={5} />
         </div>
       </div>
 
-      {/* 7-Day Scrollable Grid */}
-      <div className="overflow-x-auto pb-4 -mx-6 px-6">
-        <div className="flex gap-4 min-w-min pr-6">
-          {weekDays.map((day) => {
-            const dateKey = toDateKey(day);
+      {/* Day group: [← ] [cards] [ →] */}
+      <div className="flex items-start gap-2">
+
+        {/* Prev-group arrow */}
+        <button
+          onClick={goPrev}
+          disabled={!canGoPrev}
+          className={`mt-5 ${navBtnClass(canGoPrev)}`}
+          style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}
+        >
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+
+        {/* Visible day cards */}
+        <div className="flex flex-1 gap-3 sm:gap-4 min-w-0">
+          {visibleDays.map((day) => {
+            const dateKey        = toDateKey(day);
             const dayCompletions = completions[dateKey] ?? {};
-            const dayTasks = tasksByDate[dateKey] ?? [];
-            const dayLog = logsByDate[dateKey];
+            const dayTasks       = tasksByDate[dateKey] ?? [];
+            const dayLog         = logsByDate[dateKey];
             const completedCount = habits.filter(h => dayCompletions[h.id]).length;
-            const dayPct = habits.length > 0 ? (completedCount / habits.length) * 100 : 0;
+            const dayPct         = habits.length > 0 ? (completedCount / habits.length) * 100 : 0;
+            const isToday        = dateKey === toDateKey(new Date());
 
             return (
               <div
                 key={dateKey}
-                className={`rounded-xl p-5 flex flex-col gap-4 w-[320px] flex-shrink-0 transition-colors border ${
-                  isDark ? 'bg-[#243347] border-[#3A4A5E]' : 'bg-white border-[#D4D2CA]'
+                className={`rounded-xl p-4 sm:p-5 flex flex-col gap-4 flex-1 min-w-0 transition-colors border ${
+                  isToday
+                    ? isDark
+                      ? 'bg-[#243347] border-[#7AA897]/60'
+                      : 'bg-white border-[#6B9B8C]/60'
+                    : isDark
+                    ? 'bg-[#243347] border-[#3A4A5E]'
+                    : 'bg-white border-[#D4D2CA]'
                 }`}
                 style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}
               >
                 {/* Day Header */}
                 <div className={`text-center pb-3 border-b ${isDark ? 'border-[#3A4A5E]' : 'border-[#D4D2CA]'}`}>
-                  <div className={`font-semibold text-lg ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>
-                    {day.toLocaleDateString('en-US', { weekday: 'short' })}
+                  <div className={`font-semibold ${daysToShow === 1 ? 'text-2xl' : 'text-lg'} ${
+                    isToday
+                      ? isDark ? 'text-[#7AA897]' : 'text-[#6B9B8C]'
+                      : isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'
+                  }`}>
+                    {day.toLocaleDateString('en-US', { weekday: daysToShow === 1 ? 'long' : 'short' })}
+                    {isToday && <span className={`ml-1.5 font-normal opacity-70 ${daysToShow === 1 ? 'text-sm' : 'text-xs'}`}>Today</span>}
                   </div>
-                  <div className={`text-sm ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>
+                  <div className={`${daysToShow === 1 ? 'text-base' : 'text-sm'} ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>
                     {day.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </div>
                 </div>
 
                 {/* Progress Ring */}
                 <div className="flex justify-center">
-                  <CircularProgress percentage={dayPct} size={100} strokeWidth={6} />
+                  <CircularProgress percentage={dayPct} size={daysToShow === 1 ? 120 : daysToShow === 2 ? 100 : 80} strokeWidth={daysToShow === 1 ? 7 : 6} />
                 </div>
 
                 {/* Completion Count */}
-                <div className={`text-center text-sm font-medium ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}
+                <div className={`text-center font-medium ${daysToShow === 1 ? 'text-base' : 'text-sm'} ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}
                      style={{ fontFamily: 'var(--font-mono)' }}>
                   {completedCount} / {habits.length} completed
                 </div>
 
                 {/* Habits Checklist */}
                 <div className="space-y-2">
-                  <div className={`font-medium text-sm ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>Habits</div>
+                  <div className={`uppercase tracking-wider text-xs font-semibold ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>Habits</div>
                   {habits.length === 0 && (
                     <div className={`text-xs ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>
                       No habits yet — add some in the Habits tab.
@@ -163,11 +224,8 @@ export function WeeklyView({ habits }: WeeklyViewProps) {
                   )}
                   {habits.map((habit) => (
                     <label key={habit.id} className="flex items-center gap-2 cursor-pointer">
-                      <div
-                        onClick={() => toggleLog(dateKey, habit.id)}
-                        className={checkboxClass(!!dayCompletions[habit.id])}
-                      />
-                      <span className={`text-sm ${
+                      <div onClick={() => toggleLog(dateKey, habit.id)} className={checkboxClass(!!dayCompletions[habit.id])} />
+                      <span className={`${daysToShow === 1 ? 'text-base' : 'text-sm'} ${
                         dayCompletions[habit.id]
                           ? isDark ? 'line-through text-[#9B9B9B]' : 'line-through text-[#6B6B6B]'
                           : isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'
@@ -180,7 +238,7 @@ export function WeeklyView({ habits }: WeeklyViewProps) {
 
                 {/* Tasks */}
                 <div className="space-y-2">
-                  <div className={`font-medium text-sm ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>Tasks</div>
+                  <div className={`uppercase tracking-wider text-xs font-semibold ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>Tasks</div>
                   {dayTasks.map((task) => (
                     <div key={task.id} className="flex items-center gap-2">
                       <div onClick={() => toggleTask(dateKey, task.id)} className={checkboxClass(task.completed)} />
@@ -203,18 +261,18 @@ export function WeeklyView({ habits }: WeeklyViewProps) {
                   ))}
                   <button
                     onClick={() => addTask(dateKey)}
-                    className={`flex items-center gap-1 text-sm font-medium transition-colors ${
-                      isDark ? 'text-[#7AA897] hover:text-[#94BDAC]' : 'text-[#6B9B8C] hover:text-[#5A8B7D]'
-                    }`}
+                    className={`flex items-center gap-1 font-medium transition-colors ${
+                      daysToShow === 1 ? 'text-base' : 'text-sm'
+                    } ${isDark ? 'text-[#7AA897] hover:text-[#94BDAC]' : 'text-[#6B9B8C] hover:text-[#5A8B7D]'}`}
                   >
-                    <Plus className="w-4 h-4" /> Add task
+                    <Plus className={daysToShow === 1 ? 'w-5 h-5' : 'w-4 h-4'} /> Add task
                   </button>
                 </div>
 
                 {/* Notes / Improvements / Gratitude */}
                 {(['notes', 'improvements', 'gratitude'] as const).map((field) => (
                   <div key={field}>
-                    <label className={`font-medium text-sm block mb-1.5 ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>
+                    <label className={`uppercase tracking-wider text-xs font-semibold block mb-1.5 ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>
                       {field.charAt(0).toUpperCase() + field.slice(1)}
                     </label>
                     <textarea
@@ -235,7 +293,7 @@ export function WeeklyView({ habits }: WeeklyViewProps) {
                 <div className="grid grid-cols-2 gap-3">
                   {(['mood', 'motivation'] as const).map((field) => (
                     <div key={field}>
-                      <label className={`font-medium text-sm block mb-1.5 ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>
+                      <label className={`uppercase tracking-wider text-xs font-semibold block mb-1.5 ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>
                         {field.charAt(0).toUpperCase() + field.slice(1)}
                       </label>
                       <input
@@ -265,6 +323,16 @@ export function WeeklyView({ habits }: WeeklyViewProps) {
             );
           })}
         </div>
+
+        {/* Next-group arrow */}
+        <button
+          onClick={goNext}
+          disabled={!canGoNext}
+          className={`mt-5 ${navBtnClass(canGoNext)}`}
+          style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}
+        >
+          <ChevronRight className="w-5 h-5" />
+        </button>
       </div>
     </div>
   );

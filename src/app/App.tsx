@@ -44,17 +44,17 @@ function AuthenticatedApp({ user: _user, isDark, toggleDark }: {
       <header className={`sticky top-0 z-50 border-b transition-colors ${
         isDark ? 'bg-[#243347] border-[#3A4A5E]' : 'bg-white border-[#D4D2CA]'
       }`}>
-        <div className="px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
+        <div className="px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
               isDark ? 'bg-[#7AA897]' : 'bg-[#6B9B8C]'
             }`}>
-              <span className="text-white font-semibold text-lg">H</span>
+              <span className="text-white font-semibold text-base sm:text-lg">H</span>
             </div>
-            <span className={`font-semibold text-xl ${
+            <span className={`font-semibold text-base sm:text-xl ${
               isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'
             }`}>
-              Sachit's HabitOS
+              <span className="hidden xs:inline">Sachit's </span>HabitOS
             </span>
           </div>
 
@@ -84,7 +84,7 @@ function AuthenticatedApp({ user: _user, isDark, toggleDark }: {
         </div>
 
         {/* Tab Bar */}
-        <div className={`px-6 flex gap-6 border-t ${
+        <div className={`px-3 sm:px-6 flex gap-1 sm:gap-6 border-t ${
           isDark ? 'border-[#3A4A5E]' : 'border-[#D4D2CA]'
         }`}>
           {([
@@ -96,7 +96,7 @@ function AuthenticatedApp({ user: _user, isDark, toggleDark }: {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-2 py-3 font-medium transition-colors relative ${
+              className={`px-2 sm:px-3 py-2.5 sm:py-3 text-xs sm:text-sm font-medium transition-colors relative flex-1 sm:flex-none ${
                 activeTab === tab.id
                   ? isDark ? 'text-[#7AA897]' : 'text-[#6B9B8C]'
                   : isDark ? 'text-[#9B9B9B] hover:text-[#E8E6E0]' : 'text-[#6B6B6B] hover:text-[#2D2D2D]'
