@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { CircularProgress } from './CircularProgress';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { useDarkMode } from '../App';
+import { useDarkMode } from '../context/DarkModeContext';
 import type { Habit } from '../App';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 

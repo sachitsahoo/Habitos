@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Trash2, Plus, GripVertical } from 'lucide-react';
-import { useDarkMode } from '../App';
+import { useDarkMode } from '../context/DarkModeContext';
 import type { Habit } from '../App';
 import { Button } from './ui/button';
 import { Input } from './ui/input';

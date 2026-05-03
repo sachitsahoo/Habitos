@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { CircularProgress } from './CircularProgress';
 import { ChevronLeft, ChevronRight, Plus, X } from 'lucide-react';
-import { useDarkMode } from '../App';
+import { useDarkMode } from '../context/DarkModeContext';
 import type { Habit } from '../App';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 

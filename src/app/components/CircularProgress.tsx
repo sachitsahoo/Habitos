@@ -1,4 +1,4 @@
-import { useDarkMode } from '../App';
+import { useDarkMode } from '../context/DarkModeContext';
 
 interface CircularProgressProps {
   percentage: number;

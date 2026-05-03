@@ -1,5 +1,5 @@
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { useDarkMode } from '../App';
+import { useDarkMode } from '../context/DarkModeContext';
 import type { Habit } from '../App';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 
