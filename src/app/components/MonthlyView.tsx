@@ -3,11 +3,8 @@ import { CircularProgress } from './CircularProgress';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useDarkMode } from '../context/DarkModeContext';
+import { useHabitLogs } from '../../hooks/useHabitLogs';
 import type { Habit } from '../App';
-import { useLocalStorage } from '../hooks/useLocalStorage';
-
-interface StoredHabit extends Habit { completed: boolean }
-interface StoredDayData { habits: StoredHabit[]; mood: number; motivation: number; }
 
 function getDaysInMonth(year: number, month: number): number {
   return new Date(year, month + 1, 0).getDate();
@@ -22,21 +19,22 @@ interface MonthlyViewProps { habits: Habit[] }
 export function MonthlyView({ habits }: MonthlyViewProps) {
   const { isDark } = useDarkMode();
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [allDayData] = useLocalStorage<Record<string, StoredDayData>>('habitos-week-data', {});
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
   const daysInMonth = getDaysInMonth(year, month);
 
-  const isHabitCompleted = (day: number, habitId: string): boolean => {
-    const stored = allDayData[toDateKey(year, month, day)];
-    return stored?.habits?.find(h => h.id === habitId)?.completed ?? false;
-  };
+  const startDate = toDateKey(year, month, 1);
+  const endDate = toDateKey(year, month, daysInMonth);
+
+  const { completions } = useHabitLogs(startDate, endDate);
+
+  const isCompleted = (day: number, habitId: string): boolean =>
+    completions[toDateKey(year, month, day)]?.[habitId] ?? false;
 
   const getDayCompletion = (day: number): number => {
     if (habits.length === 0) return 0;
-    const completed = habits.filter(h => isHabitCompleted(day, h.id)).length;
-    return (completed / habits.length) * 100;
+    return (habits.filter(h => isCompleted(day, h.id)).length / habits.length) * 100;
   };
 
   const getMonthCompletion = (): number => {
@@ -66,7 +64,7 @@ export function MonthlyView({ habits }: MonthlyViewProps) {
 
   const getHabitMonthCompletion = (habitId: string): number => {
     const completed = Array.from({ length: daysInMonth }, (_, i) =>
-      isHabitCompleted(i + 1, habitId)
+      isCompleted(i + 1, habitId)
     ).filter(Boolean).length;
     return (completed / daysInMonth) * 100;
   };
@@ -87,93 +85,52 @@ export function MonthlyView({ habits }: MonthlyViewProps) {
     setCurrentDate(d);
   };
 
+  const cardClass = `rounded-xl transition-colors border ${isDark ? 'bg-[#243347] border-[#3A4A5E]' : 'bg-white border-[#D4D2CA]'}`;
+
   return (
     <div className="p-6">
       {/* Month Navigation */}
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <button
-            onClick={previousMonth}
-            className={`p-2 rounded-lg transition-colors ${
-              isDark
-                ? 'bg-[#243347] hover:bg-[#2D3E54] text-[#E8E6E0]'
-                : 'bg-white hover:bg-[#E8E6E0] text-[#2D2D2D]'
-            }`}
-            style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}
-          >
+          <button onClick={previousMonth}
+            className={`p-2 rounded-lg transition-colors ${isDark ? 'bg-[#243347] hover:bg-[#2D3E54] text-[#E8E6E0]' : 'bg-white hover:bg-[#E8E6E0] text-[#2D2D2D]'}`}
+            style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
             <ChevronLeft className="w-5 h-5" />
           </button>
           <span className={`font-semibold text-xl ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>
             {currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
           </span>
-          <button
-            onClick={nextMonth}
-            className={`p-2 rounded-lg transition-colors ${
-              isDark
-                ? 'bg-[#243347] hover:bg-[#2D3E54] text-[#E8E6E0]'
-                : 'bg-white hover:bg-[#E8E6E0] text-[#2D2D2D]'
-            }`}
-            style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}
-          >
+          <button onClick={nextMonth}
+            className={`p-2 rounded-lg transition-colors ${isDark ? 'bg-[#243347] hover:bg-[#2D3E54] text-[#E8E6E0]' : 'bg-white hover:bg-[#E8E6E0] text-[#2D2D2D]'}`}
+            style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
             <ChevronRight className="w-5 h-5" />
           </button>
         </div>
-        <div className={`p-4 rounded-lg ${
-          isDark ? 'bg-[#243347]' : 'bg-white'
-        }`} style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+        <div className={`p-4 rounded-lg ${isDark ? 'bg-[#243347]' : 'bg-white'}`}
+             style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
           <CircularProgress percentage={getMonthCompletion()} size={80} strokeWidth={6} />
         </div>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className={`rounded-xl p-6 transition-colors border ${
-          isDark
-            ? 'bg-[#243347] border-[#3A4A5E]'
-            : 'bg-white border-[#D4D2CA]'
-        }`} style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
-          <div className={`text-3xl font-semibold ${isDark ? 'text-[#7AA897]' : 'text-[#6B9B8C]'}`}
-               style={{ fontFamily: 'var(--font-mono)' }}>
-            {Math.round(getMonthCompletion())}%
+        {[
+          { label: 'Month Completion', value: `${Math.round(getMonthCompletion())}%` },
+          { label: 'Current Streak',   value: getCurrentStreak() },
+          { label: 'Best Day',         value: getBestDay() },
+        ].map(({ label, value }) => (
+          <div key={label} className={`${cardClass} p-6`} style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+            <div className={`text-3xl font-semibold ${isDark ? 'text-[#7AA897]' : 'text-[#6B9B8C]'}`}
+                 style={{ fontFamily: 'var(--font-mono)' }}>
+              {value}
+            </div>
+            <div className={`text-sm mt-1 ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>{label}</div>
           </div>
-          <div className={`text-sm mt-1 ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>
-            Month Completion
-          </div>
-        </div>
-        <div className={`rounded-xl p-6 transition-colors border ${
-          isDark
-            ? 'bg-[#243347] border-[#3A4A5E]'
-            : 'bg-white border-[#D4D2CA]'
-        }`} style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
-          <div className={`text-3xl font-semibold ${isDark ? 'text-[#7AA897]' : 'text-[#6B9B8C]'}`}
-               style={{ fontFamily: 'var(--font-mono)' }}>
-            {getCurrentStreak()}
-          </div>
-          <div className={`text-sm mt-1 ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>
-            Current Streak
-          </div>
-        </div>
-        <div className={`rounded-xl p-6 transition-colors border ${
-          isDark
-            ? 'bg-[#243347] border-[#3A4A5E]'
-            : 'bg-white border-[#D4D2CA]'
-        }`} style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
-          <div className={`text-3xl font-semibold ${isDark ? 'text-[#7AA897]' : 'text-[#6B9B8C]'}`}
-               style={{ fontFamily: 'var(--font-mono)' }}>
-            {getBestDay()}
-          </div>
-          <div className={`text-sm mt-1 ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>
-            Best Day
-          </div>
-        </div>
+        ))}
       </div>
 
       {/* Habit Completion Matrix */}
-      <div className={`rounded-xl p-6 mb-6 overflow-x-auto transition-colors border ${
-        isDark
-          ? 'bg-[#243347] border-[#3A4A5E]'
-          : 'bg-white border-[#D4D2CA]'
-      }`} style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+      <div className={`${cardClass} p-6 mb-6 overflow-x-auto`} style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
         <h3 className={`font-semibold text-lg mb-4 ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>
           Habit Completion Matrix
         </h3>
@@ -186,26 +143,16 @@ export function MonthlyView({ habits }: MonthlyViewProps) {
             <thead>
               <tr>
                 <th className={`text-left p-2 border-b font-medium text-sm sticky left-0 z-10 ${
-                  isDark
-                    ? 'border-[#3A4A5E] bg-[#243347] text-[#E8E6E0]'
-                    : 'border-[#D4D2CA] bg-white text-[#2D2D2D]'
-                }`}>
-                  Habit
-                </th>
+                  isDark ? 'border-[#3A4A5E] bg-[#243347] text-[#E8E6E0]' : 'border-[#D4D2CA] bg-white text-[#2D2D2D]'
+                }`}>Habit</th>
                 {Array.from({ length: daysInMonth }, (_, i) => (
                   <th key={i} className={`text-center p-2 border-b font-medium text-xs min-w-[32px] ${
                     isDark ? 'border-[#3A4A5E] text-[#9B9B9B]' : 'border-[#D4D2CA] text-[#6B6B6B]'
-                  }`}>
-                    {i + 1}
-                  </th>
+                  }`}>{i + 1}</th>
                 ))}
                 <th className={`p-2 border-b font-medium text-sm sticky right-0 z-10 ${
-                  isDark
-                    ? 'border-[#3A4A5E] bg-[#243347] text-[#E8E6E0]'
-                    : 'border-[#D4D2CA] bg-white text-[#2D2D2D]'
-                }`}>
-                  Progress
-                </th>
+                  isDark ? 'border-[#3A4A5E] bg-[#243347] text-[#E8E6E0]' : 'border-[#D4D2CA] bg-white text-[#2D2D2D]'
+                }`}>Progress</th>
               </tr>
             </thead>
             <tbody>
@@ -214,45 +161,29 @@ export function MonthlyView({ habits }: MonthlyViewProps) {
                 return (
                   <tr key={habit.id} className={isDark ? 'hover:bg-[#2D3E54]/30' : 'hover:bg-[#F8F7F4]'}>
                     <td className={`p-2 border-b text-sm sticky left-0 z-10 font-medium ${
-                      isDark
-                        ? 'border-[#3A4A5E] bg-[#243347] text-[#E8E6E0]'
-                        : 'border-[#D4D2CA] bg-white text-[#2D2D2D]'
-                    }`}>
-                      {habit.name}
-                    </td>
-                    {Array.from({ length: daysInMonth }, (_, i) => {
-                      const completed = isHabitCompleted(i + 1, habit.id);
-                      return (
-                        <td key={i} className={`p-2 border-b ${
-                          isDark ? 'border-[#3A4A5E]' : 'border-[#D4D2CA]'
-                        }`}>
-                          <div className="flex justify-center">
-                            <div className={`w-3 h-3 rounded ${
-                              completed
-                                ? isDark ? 'bg-[#7AA897]' : 'bg-[#6B9B8C]'
-                                : isDark ? 'bg-[#2D3E54]' : 'bg-[#E8E6E0]'
-                            }`} />
-                          </div>
-                        </td>
-                      );
-                    })}
+                      isDark ? 'border-[#3A4A5E] bg-[#243347] text-[#E8E6E0]' : 'border-[#D4D2CA] bg-white text-[#2D2D2D]'
+                    }`}>{habit.name}</td>
+                    {Array.from({ length: daysInMonth }, (_, i) => (
+                      <td key={i} className={`p-2 border-b ${isDark ? 'border-[#3A4A5E]' : 'border-[#D4D2CA]'}`}>
+                        <div className="flex justify-center">
+                          <div className={`w-3 h-3 rounded ${
+                            isCompleted(i + 1, habit.id)
+                              ? isDark ? 'bg-[#7AA897]' : 'bg-[#6B9B8C]'
+                              : isDark ? 'bg-[#2D3E54]' : 'bg-[#E8E6E0]'
+                          }`} />
+                        </div>
+                      </td>
+                    ))}
                     <td className={`p-2 border-b sticky right-0 z-10 ${
-                      isDark
-                        ? 'border-[#3A4A5E] bg-[#243347]'
-                        : 'border-[#D4D2CA] bg-white'
+                      isDark ? 'border-[#3A4A5E] bg-[#243347]' : 'border-[#D4D2CA] bg-white'
                     }`}>
                       <div className="flex items-center gap-2">
-                        <div className={`flex-1 rounded-full h-2 overflow-hidden ${
-                          isDark ? 'bg-[#2D3E54]' : 'bg-[#E8E6E0]'
-                        }`}>
-                          <div
-                            className={isDark ? 'bg-[#7AA897] h-full transition-all' : 'bg-[#6B9B8C] h-full transition-all'}
-                            style={{ width: `${completion}%` }}
-                          />
+                        <div className={`flex-1 rounded-full h-2 overflow-hidden ${isDark ? 'bg-[#2D3E54]' : 'bg-[#E8E6E0]'}`}>
+                          <div className={`h-full transition-all ${isDark ? 'bg-[#7AA897]' : 'bg-[#6B9B8C]'}`}
+                               style={{ width: `${completion}%` }} />
                         </div>
-                        <span className={`text-xs font-medium min-w-[40px] text-right ${
-                          isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'
-                        }`} style={{ fontFamily: 'var(--font-mono)' }}>
+                        <span className={`text-xs font-medium min-w-[40px] text-right ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}
+                              style={{ fontFamily: 'var(--font-mono)' }}>
                           {Math.round(completion)}%
                         </span>
                       </div>
@@ -266,11 +197,7 @@ export function MonthlyView({ habits }: MonthlyViewProps) {
       </div>
 
       {/* Monthly Trend Chart */}
-      <div className={`rounded-xl p-6 transition-colors border ${
-        isDark
-          ? 'bg-[#243347] border-[#3A4A5E]'
-          : 'bg-white border-[#D4D2CA]'
-      }`} style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+      <div className={`${cardClass} p-6`} style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
         <h3 className={`font-semibold text-lg mb-4 ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>
           Daily Completion Trend
         </h3>
@@ -283,39 +210,16 @@ export function MonthlyView({ habits }: MonthlyViewProps) {
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#3A4A5E' : '#D4D2CA'} />
-            <XAxis
-              dataKey="day"
-              stroke={isDark ? '#9B9B9B' : '#6B6B6B'}
-              fontSize={12}
-              tickLine={false}
-              style={{ fontFamily: 'var(--font-mono)' }}
-            />
-            <YAxis
-              stroke={isDark ? '#9B9B9B' : '#6B6B6B'}
-              fontSize={12}
-              tickLine={false}
-              domain={[0, 100]}
-              tickFormatter={(value) => `${value}%`}
-              style={{ fontFamily: 'var(--font-mono)' }}
-            />
+            <XAxis dataKey="day" stroke={isDark ? '#9B9B9B' : '#6B6B6B'} fontSize={12} tickLine={false}
+                   style={{ fontFamily: 'var(--font-mono)' }} />
+            <YAxis stroke={isDark ? '#9B9B9B' : '#6B6B6B'} fontSize={12} tickLine={false}
+                   domain={[0, 100]} tickFormatter={(v) => `${v}%`} style={{ fontFamily: 'var(--font-mono)' }} />
             <Tooltip
-              contentStyle={{
-                backgroundColor: isDark ? '#243347' : 'white',
-                border: `1px solid ${isDark ? '#3A4A5E' : '#D4D2CA'}`,
-                borderRadius: '12px',
-                color: isDark ? '#E8E6E0' : '#2D2D2D',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.06)'
-              }}
+              contentStyle={{ backgroundColor: isDark ? '#243347' : 'white', border: `1px solid ${isDark ? '#3A4A5E' : '#D4D2CA'}`, borderRadius: '12px', color: isDark ? '#E8E6E0' : '#2D2D2D', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}
               formatter={(value: number) => [`${value.toFixed(1)}%`, 'Completion']}
             />
-            <Area
-              type="monotone"
-              dataKey="completion"
-              stroke={isDark ? '#7AA897' : '#6B9B8C'}
-              strokeWidth={2}
-              fillOpacity={1}
-              fill="url(#monthlyColorCompletion)"
-            />
+            <Area type="monotone" dataKey="completion" stroke={isDark ? '#7AA897' : '#6B9B8C'}
+                  strokeWidth={2} fillOpacity={1} fill="url(#monthlyColorCompletion)" />
           </AreaChart>
         </ResponsiveContainer>
       </div>

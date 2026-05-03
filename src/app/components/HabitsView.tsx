@@ -1,18 +1,14 @@
 import { useState } from 'react';
 import { Trash2, Plus, GripVertical } from 'lucide-react';
 import { useDarkMode } from '../context/DarkModeContext';
-import type { Habit } from '../App';
+import { useHabits } from '../../hooks/useHabits';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 
-interface HabitsViewProps {
-  habits: Habit[];
-  setHabits: (value: Habit[] | ((prev: Habit[]) => Habit[])) => void;
-}
-
-export function HabitsView({ habits, setHabits }: HabitsViewProps) {
+export function HabitsView() {
   const { isDark } = useDarkMode();
+  const { habits, loading, addHabit, deleteHabit, updateHabit, reorderHabits } = useHabits();
   const [newHabitName, setNewHabitName] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draggedId, setDraggedId] = useState<string | null>(null);
@@ -32,14 +28,12 @@ export function HabitsView({ habits, setHabits }: HabitsViewProps) {
       setDragOverId(null);
       return;
     }
-    setHabits(prev => {
-      const items = [...prev];
-      const from = items.findIndex(h => h.id === draggedId);
-      const to = items.findIndex(h => h.id === targetId);
-      const [moved] = items.splice(from, 1);
-      items.splice(to, 0, moved);
-      return items;
-    });
+    const items = [...habits];
+    const from = items.findIndex(h => h.id === draggedId);
+    const to = items.findIndex(h => h.id === targetId);
+    const [moved] = items.splice(from, 1);
+    items.splice(to, 0, moved);
+    reorderHabits(items);
     setDraggedId(null);
     setDragOverId(null);
   };
@@ -49,35 +43,22 @@ export function HabitsView({ habits, setHabits }: HabitsViewProps) {
     setDragOverId(null);
   };
 
-  const activeHabits = habits.filter(h => !h.endDate);
-
-  const addHabit = () => {
-    if (newHabitName.trim()) {
-      const today = new Date().toISOString().split('T')[0];
-      setHabits(prev => [
-        ...prev,
-        { id: Date.now().toString(), name: newHabitName.trim(), startDate: today },
-      ]);
-      setNewHabitName('');
-    }
+  const handleAdd = async () => {
+    const name = newHabitName.trim();
+    if (!name) return;
+    setNewHabitName('');
+    await addHabit(name);
   };
 
-  const archiveHabit = (id: string) => {
-    const today = new Date().toISOString().split('T')[0];
-    setHabits(prev => prev.map(h => h.id === id ? { ...h, endDate: today } : h));
-  };
-
-  const updateHabit = (id: string, newName: string) => {
-    if (newName.trim()) {
-      setHabits(prev => prev.map(h => h.id === id ? { ...h, name: newName.trim() } : h));
-    }
+  const handleUpdate = async (id: string, name: string) => {
+    if (name.trim()) await updateHabit(id, name.trim());
     setEditingId(null);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, id?: string) => {
     if (e.key === 'Enter') {
-      if (id) updateHabit(id, e.currentTarget.value);
-      else addHabit();
+      if (id) handleUpdate(id, e.currentTarget.value);
+      else handleAdd();
     }
     if (e.key === 'Escape') setEditingId(null);
   };
@@ -100,7 +81,15 @@ export function HabitsView({ habits, setHabits }: HabitsViewProps) {
           <CardContent className="px-8 pb-8">
             {/* Habits List */}
             <div className="space-y-3 mb-6">
-              {activeHabits.map((habit) => (
+              {loading ? (
+                <div className={`text-center py-16 ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>
+                  Loading…
+                </div>
+              ) : habits.length === 0 ? (
+                <div className={`text-center py-16 ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>
+                  No habits yet. Add your first habit below!
+                </div>
+              ) : habits.map((habit) => (
                 <div
                   key={habit.id}
                   draggable
@@ -120,7 +109,6 @@ export function HabitsView({ habits, setHabits }: HabitsViewProps) {
                       : 'bg-[#F8F7F4] border-[#D4D2CA] hover:border-[#6B9B8C]/30'
                   }`}
                 >
-                  {/* Drag handle */}
                   <span className={`cursor-grab active:cursor-grabbing transition-colors ${
                     isDark ? 'text-[#9B9B9B] hover:text-[#E8E6E0]' : 'text-[#6B6B6B] hover:text-[#2D2D2D]'
                   }`}>
@@ -130,7 +118,7 @@ export function HabitsView({ habits, setHabits }: HabitsViewProps) {
                   {editingId === habit.id ? (
                     <Input
                       defaultValue={habit.name}
-                      onBlur={(e) => updateHabit(habit.id, e.target.value)}
+                      onBlur={(e) => handleUpdate(habit.id, e.target.value)}
                       onKeyDown={(e) => handleKeyDown(e, habit.id)}
                       autoFocus
                       className={`flex-1 border-0 border-b-2 rounded-none shadow-none focus-visible:ring-0 px-1 py-1 h-auto text-base ${
@@ -153,7 +141,7 @@ export function HabitsView({ habits, setHabits }: HabitsViewProps) {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => archiveHabit(habit.id)}
+                    onClick={() => deleteHabit(habit.id)}
                     className={`opacity-0 group-hover:opacity-100 transition-all ${
                       isDark
                         ? 'text-[#9B9B9B] hover:text-[#D66A6A] hover:bg-[#2D3E54]'
@@ -164,19 +152,11 @@ export function HabitsView({ habits, setHabits }: HabitsViewProps) {
                   </Button>
                 </div>
               ))}
-
-              {activeHabits.length === 0 && (
-                <div className={`text-center py-16 ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>
-                  No habits yet. Add your first habit below!
-                </div>
-              )}
             </div>
 
             {/* Add New Habit */}
             <div className={`border-t pt-6 ${isDark ? 'border-[#3A4A5E]' : 'border-[#D4D2CA]'}`}>
-              <label className={`block text-sm font-medium mb-2 ${
-                isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'
-              }`}>
+              <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>
                 Add New Habit
               </label>
               <div className="flex gap-3">
@@ -192,7 +172,7 @@ export function HabitsView({ habits, setHabits }: HabitsViewProps) {
                   }`}
                 />
                 <Button
-                  onClick={addHabit}
+                  onClick={handleAdd}
                   disabled={!newHabitName.trim()}
                   className={`px-6 py-3 h-auto rounded-xl font-medium ${
                     isDark
@@ -214,7 +194,7 @@ export function HabitsView({ habits, setHabits }: HabitsViewProps) {
                   className={`font-semibold text-lg ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}
                   style={{ fontFamily: 'var(--font-mono)' }}
                 >
-                  {activeHabits.length}
+                  {habits.length}
                 </span>
               </div>
             </div>

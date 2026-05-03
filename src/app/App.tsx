@@ -6,6 +6,7 @@ import { HabitsView } from './components/HabitsView';
 import { AuthScreen } from './components/AuthScreen';
 import { Moon, Sun, LogOut } from 'lucide-react';
 import { useLocalStorage } from './hooks/useLocalStorage';
+import { useHabits } from '../hooks/useHabits';
 import { Button } from './components/ui/button';
 import { supabase } from '../lib/supabase';
 import { DarkModeContext } from './context/DarkModeContext';
@@ -13,40 +14,23 @@ import type { User } from '@supabase/supabase-js';
 
 export type Tab = 'weekly' | 'monthly' | 'analytics' | 'habits';
 
+// Minimal habit shape needed by views — DbHabit satisfies this.
 export interface Habit {
   id: string;
   name: string;
-  startDate: string;
-  endDate?: string;
 }
 
 // ─── Authenticated shell ────────────────────────────────────────────────────
 // Only mounts once `user` is known, so the localStorage key is stable from
 // the very first render (no stale reads from a previous user's data).
 
-function AuthenticatedApp({ user, isDark, toggleDark }: {
+function AuthenticatedApp({ user: _user, isDark, toggleDark }: {
   user: User;
   isDark: boolean;
   toggleDark: () => void;
 }) {
   const [activeTab, setActiveTab] = useState<Tab>('weekly');
-
-  // Key scoped to user — each account gets its own localStorage slot.
-  // Default is [] so a brand-new account starts empty (no mock habits).
-  // Phase 3 will replace this with Supabase reads.
-  const [habits, setHabits] = useLocalStorage<Habit[]>(
-    `habitos-habits-${user.id}`,
-    []
-  );
-
-  // One-time migration: patch habits that predate the startDate field
-  useEffect(() => {
-    setHabits(prev => {
-      if (!prev.some(h => !h.startDate)) return prev;
-      return prev.map(h => h.startDate ? h : { ...h, startDate: '2000-01-01' });
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const { habits } = useHabits();
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -70,7 +54,7 @@ function AuthenticatedApp({ user, isDark, toggleDark }: {
             <span className={`font-semibold text-xl ${
               isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'
             }`}>
-              HabitOS
+              Sachit's HabitOS
             </span>
           </div>
 
@@ -132,9 +116,9 @@ function AuthenticatedApp({ user, isDark, toggleDark }: {
       {/* Content Area */}
       <main className="flex-1 overflow-auto">
         {activeTab === 'weekly'    && <WeeklyView habits={habits} />}
-        {activeTab === 'monthly'   && <MonthlyView habits={habits.filter(h => !h.endDate)} />}
-        {activeTab === 'analytics' && <AnalyticsView habits={habits.filter(h => !h.endDate)} />}
-        {activeTab === 'habits'    && <HabitsView habits={habits} setHabits={setHabits} />}
+        {activeTab === 'monthly'   && <MonthlyView habits={habits} />}
+        {activeTab === 'analytics' && <AnalyticsView habits={habits} />}
+        {activeTab === 'habits'    && <HabitsView />}
       </main>
     </div>
   );
