@@ -119,7 +119,7 @@ export function AuthScreen({ invitePending = false }: { invitePending?: boolean 
             <span className="text-white font-semibold text-2xl">a</span>
           </div>
           <span className={`font-semibold text-2xl ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>
-            Ataraxia
+            ataraxia
           </span>
           <p className={`text-sm ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>
             {mode === 'signin' ? 'Welcome back' : 'Create your account'}

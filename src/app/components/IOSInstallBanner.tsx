@@ -42,7 +42,7 @@ export function IOSInstallBanner() {
           <span className="text-white font-bold text-lg">a</span>
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-sm">Add Ataraxia to your home screen</p>
+          <p className="font-semibold text-sm">Add ataraxia to your home screen</p>
           <p className={`text-xs mt-0.5 leading-relaxed ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>
             Tap <Share className="inline w-3.5 h-3.5 mx-0.5 align-text-bottom" /> then "Add to Home Screen" for the full app experience.
           </p>

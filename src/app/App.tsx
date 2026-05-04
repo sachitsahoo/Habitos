@@ -152,7 +152,7 @@ function AuthenticatedApp({ user, isDark, toggleDark, pendingInviteCode, onClear
                       }`}
                     />
                     <span className={`font-semibold text-base sm:text-xl flex-shrink-0 ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>
-                      's Ataraxia
+                      's ataraxia
                     </span>
                   </div>
                   {nameError && (
@@ -167,14 +167,14 @@ function AuthenticatedApp({ user, isDark, toggleDark, pendingInviteCode, onClear
                     isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'
                   }`}
                 >
-                  {displayName ? `${displayName}'s Ataraxia` : 'Ataraxia'}
+                  {displayName ? `${displayName}'s ataraxia` : 'ataraxia'}
                 </button>
               )}
             </div>
 
             {/* Mobile: static, no edit */}
             <span className={`sm:hidden font-semibold text-base ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>
-              Ataraxia
+              ataraxia
             </span>
           </div>
 

@@ -28,8 +28,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['apple-touch-icon.png', 'og-image.png'],
       manifest: {
-        name: 'Ataraxia',
-        short_name: 'Ataraxia',
+        name: 'ataraxia',
+        short_name: 'ataraxia',
         description: 'Track your habits, compete with friends.',
         theme_color: '#6B9B8C',
         background_color: '#F8F7F4',
