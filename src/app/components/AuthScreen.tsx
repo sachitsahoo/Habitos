@@ -109,7 +109,7 @@ export function AuthScreen({ invitePending = false }: { invitePending?: boolean 
               ? 'bg-[#7AA897]/10 border-[#7AA897]/30 text-[#7AA897]'
               : 'bg-[#6B9B8C]/10 border-[#6B9B8C]/30 text-[#6B9B8C]'
           }`}>
-            You've been invited to a group — sign in or sign up to auto-join.
+            You've been invited to a group. Sign in or create an account to join.
           </div>
         )}
 

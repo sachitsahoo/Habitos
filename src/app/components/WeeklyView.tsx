@@ -218,7 +218,7 @@ export function WeeklyView({ habits }: WeeklyViewProps) {
                   <div className={`uppercase tracking-wider text-xs font-semibold ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>Habits</div>
                   {habits.length === 0 && (
                     <div className={`text-xs ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>
-                      No habits yet — add some in the Habits tab.
+                      No habits yet. Add some in the Habits tab.
                     </div>
                   )}
                   {habits.map((habit) => (

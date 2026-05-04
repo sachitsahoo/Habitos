@@ -445,7 +445,7 @@ export function LeaderboardView({ pendingInviteCode, onJoinComplete }: Leaderboa
                     {friendsNotInGroup.length === 0 ? (
                       <p className={`text-xs ${mutedText}`}>
                         {friends.length === 0
-                          ? 'You have no friends yet — add some in the Friends tab.'
+                          ? 'No friends yet. Add some in the Friends tab.'
                           : 'All your friends are already in this group.'}
                       </p>
                     ) : (

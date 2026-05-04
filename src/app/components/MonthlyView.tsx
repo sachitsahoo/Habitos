@@ -62,7 +62,7 @@ export function MonthlyView({ habits }: MonthlyViewProps) {
       const c = getDayCompletion(day);
       if (c > best) { best = c; bestDayNum = day; }
     }
-    return best > 0 ? bestDayNum : '—';
+    return best > 0 ? bestDayNum : '-';
   };
 
   const getHabitMonthCompletion = (habitId: string): number => {

@@ -209,7 +209,7 @@ export function FriendsView() {
         </div>
         {friends.length === 0 ? (
           <p className={`text-sm py-4 text-center ${mutedText}`}>
-            No friends yet — search above to add some.
+            No friends yet. Search above to add some.
           </p>
         ) : (
           <div className="space-y-1">
