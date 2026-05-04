@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Plus, Copy, Check, UserPlus, LogOut, Trophy, Users, Link, X, UserCheck, UserX } from 'lucide-react';
 import { useDarkMode } from '../context/DarkModeContext';
 import { useGroups } from '../../hooks/useGroups';
@@ -44,20 +45,33 @@ function Modal({ onClose, children }: { onClose: () => void; children: React.Rea
 }
 
 // ── Tooltip wrapper ──────────────────────────────────────────────────────────
+// Portals to document.body so overflow:hidden ancestors never clip the label.
 function Tooltip({ label, children }: { label: string; children: React.ReactNode }) {
-  const [visible, setVisible] = useState(false);
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+
+  const show = () => {
+    if (!triggerRef.current) return;
+    const r = triggerRef.current.getBoundingClientRect();
+    setPos({ x: r.left + r.width / 2, y: r.top });
+  };
+
   return (
-    <div className="relative flex items-center"
-      onMouseEnter={() => setVisible(true)}
-      onMouseLeave={() => setVisible(false)}
+    <div ref={triggerRef} className="flex items-center"
+      onMouseEnter={show}
+      onMouseLeave={() => setPos(null)}
     >
       {children}
-      {visible && (
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1 rounded-lg text-xs font-medium whitespace-nowrap z-30
-          bg-[#1A2332] text-[#E8E6E0] shadow-lg pointer-events-none">
+      {pos && createPortal(
+        <div
+          className="fixed z-[9999] px-2.5 py-1 rounded-lg text-xs font-medium whitespace-nowrap pointer-events-none
+            bg-[#1A2332] text-[#E8E6E0] shadow-lg"
+          style={{ left: pos.x, top: pos.y - 8, transform: 'translate(-50%, -100%)' }}
+        >
           {label}
           <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#1A2332]" />
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
