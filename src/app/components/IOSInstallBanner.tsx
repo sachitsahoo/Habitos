@@ -32,7 +32,7 @@ export function IOSInstallBanner() {
   return (
     <div className={`fixed bottom-0 left-0 right-0 z-50 p-4 border-t ${
       isDark
-        ? 'bg-[#243347] border-[#3A4A5E] text-[#E8E6E0]'
+        ? 'bg-[#2A3D55] border-[#4A5E72] text-[#E8E6E0]'
         : 'bg-white border-[#D4D2CA] text-[#2D2D2D]'
     }`} style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))', boxShadow: '0 -4px 12px rgba(0,0,0,0.08)' }}>
       <div className="flex items-start gap-3">
@@ -43,11 +43,11 @@ export function IOSInstallBanner() {
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-sm">Add ataraxia to your home screen</p>
-          <p className={`text-xs mt-0.5 leading-relaxed ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>
+          <p className={`text-xs mt-0.5 leading-relaxed ${isDark ? 'text-[#ABABAB]' : 'text-[#6B6B6B]'}`}>
             Tap <Share className="inline w-3.5 h-3.5 mx-0.5 align-text-bottom" /> then "Add to Home Screen" for the full app experience.
           </p>
         </div>
-        <button onClick={dismiss} className={`p-1 rounded-lg flex-shrink-0 ${isDark ? 'hover:bg-[#2D3E54]' : 'hover:bg-[#F8F7F4]'}`}>
+        <button onClick={dismiss} className={`p-1 rounded-lg flex-shrink-0 ${isDark ? 'hover:bg-[#354D67]' : 'hover:bg-[#F8F7F4]'}`}>
           <X className="w-4 h-4" />
         </button>
       </div>

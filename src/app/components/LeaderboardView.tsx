@@ -34,7 +34,7 @@ function Modal({ onClose, children }: { onClose: () => void; children: React.Rea
       {/* Dialog */}
       <div
         className={`relative z-10 w-full max-w-sm rounded-2xl p-6 shadow-2xl border ${
-          isDark ? 'bg-[#243347] border-[#3A4A5E]' : 'bg-white border-[#D4D2CA]'
+          isDark ? 'bg-[#2A3D55] border-[#4A5E72]' : 'bg-white border-[#D4D2CA]'
         }`}
         onClick={e => e.stopPropagation()}
       >
@@ -207,7 +207,7 @@ export function LeaderboardView({ pendingInviteCode, onJoinComplete }: Leaderboa
   }`;
   const inputClass = `w-full px-3.5 py-2.5 rounded-xl text-sm border outline-none transition-all ${
     isDark
-      ? 'bg-[#1A2332] border-[#3A4A5E] text-[#E8E6E0] placeholder-[#9B9B9B] focus:border-[#7AA897]'
+      ? 'bg-[#1A2332] border-[#4A5E72] text-[#E8E6E0] placeholder-[#ABABAB] focus:border-[#7AA897]'
       : 'bg-[#F8F7F4] border-[#D4D2CA] text-[#2D2D2D] placeholder-[#6B6B6B] focus:border-[#6B9B8C]'
   }`;
   const modalTitle = `font-semibold text-lg mb-1 ${primaryText}`;
@@ -251,7 +251,7 @@ export function LeaderboardView({ pendingInviteCode, onJoinComplete }: Leaderboa
           {modalError && <p className="text-xs text-[#C84C4C] mt-2">{modalError}</p>}
           <div className="flex gap-2 mt-4">
             <button onClick={closeModal} className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-              isDark ? 'bg-[#3A4A5E] text-[#9B9B9B] hover:text-[#E8E6E0]' : 'bg-[#E8E6E0] text-[#6B6B6B] hover:text-[#2D2D2D]'
+              isDark ? 'bg-[#4A5E72] text-[#ABABAB] hover:text-[#E8E6E0]' : 'bg-[#E8E6E0] text-[#6B6B6B] hover:text-[#2D2D2D]'
             }`}>
               Cancel
             </button>
@@ -292,7 +292,7 @@ export function LeaderboardView({ pendingInviteCode, onJoinComplete }: Leaderboa
           {modalError && <p className="text-xs text-[#C84C4C] mt-2">{modalError}</p>}
           <div className="flex gap-2 mt-4">
             <button onClick={closeModal} className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-              isDark ? 'bg-[#3A4A5E] text-[#9B9B9B] hover:text-[#E8E6E0]' : 'bg-[#E8E6E0] text-[#6B6B6B] hover:text-[#2D2D2D]'
+              isDark ? 'bg-[#4A5E72] text-[#ABABAB] hover:text-[#E8E6E0]' : 'bg-[#E8E6E0] text-[#6B6B6B] hover:text-[#2D2D2D]'
             }`}>
               Cancel
             </button>
@@ -336,7 +336,7 @@ export function LeaderboardView({ pendingInviteCode, onJoinComplete }: Leaderboa
                       <button
                         onClick={() => respondToInvite(invite.id, false)}
                         className={`flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                          isDark ? 'bg-[#3A4A5E] text-[#9B9B9B] hover:text-[#D66A6A]' : 'bg-[#E8E6E0] text-[#6B6B6B] hover:text-[#C84C4C]'
+                          isDark ? 'bg-[#4A5E72] text-[#ABABAB] hover:text-[#D66A6A]' : 'bg-[#E8E6E0] text-[#6B6B6B] hover:text-[#C84C4C]'
                         }`}
                       >
                         <UserX className="w-3.5 h-3.5" /> Decline
@@ -363,7 +363,7 @@ export function LeaderboardView({ pendingInviteCode, onJoinComplete }: Leaderboa
                 <Tooltip label="Join with invite code">
                   <button
                     onClick={() => setModal('join')}
-                    className={`p-1.5 rounded-lg transition-colors ${mutedText} ${isDark ? 'hover:bg-[#2D3E54] hover:text-[#E8E6E0]' : 'hover:bg-[#E8E6E0] hover:text-[#2D2D2D]'}`}
+                    className={`p-1.5 rounded-lg transition-colors ${mutedText} ${isDark ? 'hover:bg-[#354D67] hover:text-[#E8E6E0]' : 'hover:bg-[#E8E6E0] hover:text-[#2D2D2D]'}`}
                   >
                     <Link className="w-4 h-4" />
                   </button>
@@ -388,7 +388,7 @@ export function LeaderboardView({ pendingInviteCode, onJoinComplete }: Leaderboa
                     className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-colors ${
                       selectedGroupId === group.id
                         ? isDark ? 'bg-[#7AA897]/30 text-[#7AA897] font-medium' : 'bg-[#6B9B8C]/15 text-[#6B9B8C] font-medium'
-                        : `${primaryText} ${isDark ? 'hover:bg-[#2D3E54]' : 'hover:bg-[#F8F7F4]'}`
+                        : `${primaryText} ${isDark ? 'hover:bg-[#354D67]' : 'hover:bg-[#F8F7F4]'}`
                     }`}
                   >
                     <span className="truncate block">{group.name}</span>
@@ -438,7 +438,7 @@ export function LeaderboardView({ pendingInviteCode, onJoinComplete }: Leaderboa
 
                 {/* Add friend panel */}
                 {showAddFriend && (
-                  <div className={`mt-4 pt-4 border-t ${isDark ? 'border-[#3A4A5E]' : 'border-[#D4D2CA]'}`}>
+                  <div className={`mt-4 pt-4 border-t ${isDark ? 'border-[#4A5E72]' : 'border-[#D4D2CA]'}`}>
                     <div className={`text-xs font-semibold uppercase tracking-wider mb-2 ${mutedText}`}>
                       Invite friends to {selectedGroup.name}
                     </div>
@@ -512,7 +512,7 @@ export function LeaderboardView({ pendingInviteCode, onJoinComplete }: Leaderboa
                         <div
                           key={row.user_id}
                           className={`flex items-center gap-3 sm:gap-4 px-4 py-3.5 border-b last:border-0 ${
-                            isDark ? 'border-[#3A4A5E]' : 'border-[#D4D2CA]'
+                            isDark ? 'border-[#4A5E72]' : 'border-[#D4D2CA]'
                           } ${isMe ? isDark ? 'bg-[#7AA897]/10' : 'bg-[#6B9B8C]/5' : ''}`}
                         >
                           <div
@@ -522,7 +522,7 @@ export function LeaderboardView({ pendingInviteCode, onJoinComplete }: Leaderboa
                             {m ?? i + 1}
                           </div>
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-semibold ${
-                            isDark ? 'bg-[#2D3E54]' : 'bg-[#E8E6E0]'
+                            isDark ? 'bg-[#354D67]' : 'bg-[#E8E6E0]'
                           } ${accentText}`}>
                             {row.display_name.charAt(0).toUpperCase()}
                           </div>
@@ -537,7 +537,7 @@ export function LeaderboardView({ pendingInviteCode, onJoinComplete }: Leaderboa
                               )}
                             </div>
                             <div className="flex items-center gap-2 mt-1">
-                              <div className={`flex-1 rounded-full h-1.5 overflow-hidden ${isDark ? 'bg-[#2D3E54]' : 'bg-[#E8E6E0]'}`}>
+                              <div className={`flex-1 rounded-full h-1.5 overflow-hidden ${isDark ? 'bg-[#354D67]' : 'bg-[#E8E6E0]'}`}>
                                 <div
                                   className={`h-full rounded-full transition-all ${isDark ? 'bg-[#7AA897]' : 'bg-[#6B9B8C]'}`}
                                   style={{ width: `${pct}%` }}
@@ -559,8 +559,8 @@ export function LeaderboardView({ pendingInviteCode, onJoinComplete }: Leaderboa
                                   onClick={() => sendRequest(row.user_id, row.display_name)}
                                   className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
                                     isDark
-                                      ? 'text-[#9B9B9B] hover:text-[#7AA897] hover:bg-[#2D3E54]'
-                                      : 'text-[#9B9B9B] hover:text-[#6B9B8C] hover:bg-[#E8E6E0]'
+                                      ? 'text-[#ABABAB] hover:text-[#7AA897] hover:bg-[#354D67]'
+                                      : 'text-[#ABABAB] hover:text-[#6B9B8C] hover:bg-[#E8E6E0]'
                                   }`}
                                 >
                                   <UserPlus className="w-3.5 h-3.5" />
@@ -592,8 +592,8 @@ export function LeaderboardView({ pendingInviteCode, onJoinComplete }: Leaderboa
                                   }}
                                   className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors disabled:opacity-50 ${
                                     isDark
-                                      ? 'text-[#9B9B9B] hover:text-red-400 hover:bg-[#2D3E54]'
-                                      : 'text-[#9B9B9B] hover:text-red-500 hover:bg-[#E8E6E0]'
+                                      ? 'text-[#ABABAB] hover:text-red-400 hover:bg-[#354D67]'
+                                      : 'text-[#ABABAB] hover:text-red-500 hover:bg-[#E8E6E0]'
                                   }`}
                                 >
                                   {kickingUserId === row.user_id

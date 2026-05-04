@@ -54,12 +54,12 @@ export function FriendsView() {
   };
 
   // Shared class helpers
-  const card = `rounded-xl border transition-colors ${isDark ? 'bg-[#243347] border-[#3A4A5E]' : 'bg-white border-[#D4D2CA]'}`;
-  const sectionLabel = `uppercase tracking-wider text-xs font-semibold mb-3 ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`;
-  const rowBase = `flex items-center gap-3 p-3 rounded-lg transition-colors ${isDark ? 'hover:bg-[#2D3E54]' : 'hover:bg-[#F8F7F4]'}`;
-  const avatarBg = isDark ? 'bg-[#2D3E54]' : 'bg-[#E8E6E0]';
+  const card = `rounded-xl border transition-colors ${isDark ? 'bg-[#2A3D55] border-[#4A5E72]' : 'bg-white border-[#D4D2CA]'}`;
+  const sectionLabel = `uppercase tracking-wider text-xs font-semibold mb-3 ${isDark ? 'text-[#ABABAB]' : 'text-[#6B6B6B]'}`;
+  const rowBase = `flex items-center gap-3 p-3 rounded-lg transition-colors ${isDark ? 'hover:bg-[#354D67]' : 'hover:bg-[#F8F7F4]'}`;
+  const avatarBg = isDark ? 'bg-[#354D67]' : 'bg-[#E8E6E0]';
   const accentText = isDark ? 'text-[#7AA897]' : 'text-[#6B9B8C]';
-  const mutedText = isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]';
+  const mutedText = isDark ? 'text-[#ABABAB]' : 'text-[#6B6B6B]';
   const primaryText = isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]';
 
   const Avatar = ({ name }: { name: string }) => (
@@ -115,7 +115,7 @@ export function FriendsView() {
             maxLength={50}
             className={`w-full pl-9 pr-4 py-2.5 rounded-lg text-sm border-0 focus:outline-none focus:ring-2 transition-all ${
               isDark
-                ? 'bg-[#1A2332] text-[#E8E6E0] placeholder-[#9B9B9B] focus:ring-[#7AA897]/40'
+                ? 'bg-[#1A2332] text-[#E8E6E0] placeholder-[#ABABAB] focus:ring-[#7AA897]/40'
                 : 'bg-[#F8F7F4] text-[#2D2D2D] placeholder-[#6B6B6B] focus:ring-[#6B9B8C]/30'
             }`}
           />
@@ -171,7 +171,7 @@ export function FriendsView() {
                   <button
                     onClick={() => declineRequest(req.id)}
                     className={`flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-lg transition-colors ${
-                      isDark ? 'bg-[#3A4A5E] text-[#9B9B9B] hover:text-[#D66A6A]' : 'bg-[#E8E6E0] text-[#6B6B6B] hover:text-[#C84C4C]'
+                      isDark ? 'bg-[#4A5E72] text-[#ABABAB] hover:text-[#D66A6A]' : 'bg-[#E8E6E0] text-[#6B6B6B] hover:text-[#C84C4C]'
                     }`}
                   >
                     <UserX className="w-3.5 h-3.5" /> Decline
@@ -221,7 +221,7 @@ export function FriendsView() {
                   onClick={() => handleRemove(friend.id)}
                   disabled={removingId === friend.id}
                   className={`opacity-0 group-hover:opacity-100 p-1.5 rounded-lg transition-all ${
-                    isDark ? 'text-[#9B9B9B] hover:text-[#D66A6A] hover:bg-[#3A4A5E]' : 'text-[#6B6B6B] hover:text-[#C84C4C] hover:bg-[#E8E6E0]'
+                    isDark ? 'text-[#ABABAB] hover:text-[#D66A6A] hover:bg-[#4A5E72]' : 'text-[#6B6B6B] hover:text-[#C84C4C] hover:bg-[#E8E6E0]'
                   }`}
                   title="Remove friend"
                 >

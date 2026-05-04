@@ -122,7 +122,7 @@ function AuthenticatedApp({ user, isDark, toggleDark, pendingInviteCode, onClear
     }`}>
       {/* Sticky Header */}
       <header className={`sticky top-0 z-50 border-b transition-colors ${
-        isDark ? 'bg-[#243347] border-[#3A4A5E]' : 'bg-white border-[#D4D2CA]'
+        isDark ? 'bg-[#2A3D55] border-[#4A5E72]' : 'bg-white border-[#D4D2CA]'
       }`}>
         <div className="px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
           <div className="flex items-center gap-2 sm:gap-3">
@@ -147,7 +147,7 @@ function AuthenticatedApp({ user, isDark, toggleDark, pendingInviteCode, onClear
                       maxLength={50}
                       className={`font-semibold text-base sm:text-xl w-32 sm:w-44 px-2 py-0.5 rounded-lg border outline-none transition-colors ${
                         isDark
-                          ? 'bg-[#2D3E54] border-[#3A4A5E] text-[#E8E6E0] focus:border-[#7AA897]'
+                          ? 'bg-[#354D67] border-[#4A5E72] text-[#E8E6E0] focus:border-[#7AA897]'
                           : 'bg-[#F8F7F4] border-[#D4D2CA] text-[#2D2D2D] focus:border-[#6B9B8C]'
                       }`}
                     />
@@ -184,7 +184,7 @@ function AuthenticatedApp({ user, isDark, toggleDark, pendingInviteCode, onClear
               size="icon"
               onClick={toggleDark}
               className={isDark
-                ? 'bg-[#2D3E54] hover:bg-[#3A4A5E] text-[#E8E6E0]'
+                ? 'bg-[#354D67] hover:bg-[#4A5E72] text-[#E8E6E0]'
                 : 'bg-[#E8E6E0] hover:bg-[#D4D2CA] text-[#2D2D2D]'}
             >
               {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
@@ -195,7 +195,7 @@ function AuthenticatedApp({ user, isDark, toggleDark, pendingInviteCode, onClear
               onClick={handleSignOut}
               title="Sign out"
               className={isDark
-                ? 'bg-[#2D3E54] hover:bg-[#3A4A5E] text-[#E8E6E0]'
+                ? 'bg-[#354D67] hover:bg-[#4A5E72] text-[#E8E6E0]'
                 : 'bg-[#E8E6E0] hover:bg-[#D4D2CA] text-[#2D2D2D]'}
             >
               <LogOut className="w-5 h-5" />
@@ -205,7 +205,7 @@ function AuthenticatedApp({ user, isDark, toggleDark, pendingInviteCode, onClear
 
         {/* Desktop tab bar — hidden on mobile */}
         <div className={`hidden sm:flex px-6 gap-6 border-t ${
-          isDark ? 'border-[#3A4A5E]' : 'border-[#D4D2CA]'
+          isDark ? 'border-[#4A5E72]' : 'border-[#D4D2CA]'
         }`}>
           {([
             { id: 'weekly',      label: 'Weekly' },
@@ -221,7 +221,7 @@ function AuthenticatedApp({ user, isDark, toggleDark, pendingInviteCode, onClear
               className={`px-3 py-3 text-sm font-medium transition-colors relative ${
                 activeTab === tab.id
                   ? isDark ? 'text-[#7AA897]' : 'text-[#6B9B8C]'
-                  : isDark ? 'text-[#9B9B9B] hover:text-[#E8E6E0]' : 'text-[#6B6B6B] hover:text-[#2D2D2D]'
+                  : isDark ? 'text-[#ABABAB] hover:text-[#E8E6E0]' : 'text-[#6B6B6B] hover:text-[#2D2D2D]'
               }`}
             >
               {tab.label}
@@ -255,7 +255,7 @@ function AuthenticatedApp({ user, isDark, toggleDark, pendingInviteCode, onClear
 
       {/* Mobile bottom nav — hidden on desktop */}
       <nav className={`sm:hidden fixed bottom-0 left-0 right-0 z-40 border-t ${
-        isDark ? 'bg-[#243347] border-[#3A4A5E]' : 'bg-white border-[#D4D2CA]'
+        isDark ? 'bg-[#2A3D55] border-[#4A5E72]' : 'bg-white border-[#D4D2CA]'
       }`} style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <div className="flex">
           {([
@@ -274,7 +274,7 @@ function AuthenticatedApp({ user, isDark, toggleDark, pendingInviteCode, onClear
                 className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 transition-colors ${
                   active
                     ? isDark ? 'text-[#7AA897]' : 'text-[#6B9B8C]'
-                    : isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'
+                    : isDark ? 'text-[#ABABAB]' : 'text-[#6B6B6B]'
                 }`}
               >
                 <Icon className="w-5 h-5" strokeWidth={active ? 2.5 : 1.75} />

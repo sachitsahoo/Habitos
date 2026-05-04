@@ -97,9 +97,9 @@ export function AnalyticsView({ habits }: AnalyticsViewProps) {
   const avgMotivation = trackedDays.length > 0 ? trackedDays.reduce((s, d) => s + d.motivation, 0) / trackedDays.length : 0;
   const longestStreak = habitStats.length > 0 ? Math.max(...habitStats.map(h => h.bestStreak)) : 0;
 
-  const cardClass = `rounded-xl transition-colors border ${isDark ? 'bg-[#243347] border-[#3A4A5E]' : 'bg-white border-[#D4D2CA]'}`;
-  const tooltipStyle = { backgroundColor: isDark ? '#243347' : 'white', border: `1px solid ${isDark ? '#3A4A5E' : '#D4D2CA'}`, borderRadius: '12px', color: isDark ? '#E8E6E0' : '#2D2D2D', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' };
-  const axisProps = { stroke: isDark ? '#9B9B9B' : '#6B6B6B', fontSize: 12, tickLine: false as const, style: { fontFamily: 'var(--font-mono)' } };
+  const cardClass = `rounded-xl transition-colors border ${isDark ? 'bg-[#2A3D55] border-[#4A5E72]' : 'bg-white border-[#D4D2CA]'}`;
+  const tooltipStyle = { backgroundColor: isDark ? '#2A3D55' : 'white', border: `1px solid ${isDark ? '#4A5E72' : '#D4D2CA'}`, borderRadius: '12px', color: isDark ? '#E8E6E0' : '#2D2D2D', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' };
+  const axisProps = { stroke: isDark ? '#ABABAB' : '#6B6B6B', fontSize: 12, tickLine: false as const, style: { fontFamily: 'var(--font-mono)' } };
 
   return (
     <div className="p-6">
@@ -113,7 +113,7 @@ export function AnalyticsView({ habits }: AnalyticsViewProps) {
           <div key={label} className={`${cardClass} p-6`} style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
             <div className={`text-3xl font-semibold ${isDark ? 'text-[#7AA897]' : 'text-[#6B9B8C]'}`}
                  style={{ fontFamily: 'var(--font-mono)' }}>{value}</div>
-            <div className={`text-sm mt-1 ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>{label}</div>
+            <div className={`text-sm mt-1 ${isDark ? 'text-[#ABABAB]' : 'text-[#6B6B6B]'}`}>{label}</div>
           </div>
         ))}
       </div>
@@ -131,7 +131,7 @@ export function AnalyticsView({ habits }: AnalyticsViewProps) {
                 <stop offset="95%" stopColor={isDark ? '#7AA897' : '#6B9B8C'} stopOpacity={0}/>
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#3A4A5E' : '#D4D2CA'} />
+            <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#4A5E72' : '#D4D2CA'} />
             <XAxis dataKey="date" {...axisProps} fontSize={11} interval={4} />
             <YAxis {...axisProps} domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
             <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [`${v.toFixed(1)}%`, 'Completion']} />
@@ -147,16 +147,16 @@ export function AnalyticsView({ habits }: AnalyticsViewProps) {
           Habit Performance
         </h3>
         {habitStats.length === 0 ? (
-          <p className={`text-sm py-4 ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>
+          <p className={`text-sm py-4 ${isDark ? 'text-[#ABABAB]' : 'text-[#6B6B6B]'}`}>
             No habits yet. Add habits to see performance data here.
           </p>
         ) : (
           <div className="space-y-4">
             {habitStats.map((habit) => (
-              <div key={habit.id} className={`pb-4 last:border-0 border-b ${isDark ? 'border-[#3A4A5E]' : 'border-[#D4D2CA]'}`}>
+              <div key={habit.id} className={`pb-4 last:border-0 border-b ${isDark ? 'border-[#4A5E72]' : 'border-[#D4D2CA]'}`}>
                 <div className="flex items-center justify-between mb-2">
                   <div className={`font-medium ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>{habit.name}</div>
-                  <div className={`flex items-center gap-4 text-sm ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>
+                  <div className={`flex items-center gap-4 text-sm ${isDark ? 'text-[#ABABAB]' : 'text-[#6B6B6B]'}`}>
                     <span>Current: <span style={{ fontFamily: 'var(--font-mono)' }}>{habit.currentStreak}</span> days</span>
                     <span>Best: <span style={{ fontFamily: 'var(--font-mono)' }}>{habit.bestStreak}</span> days</span>
                     <span className={`font-semibold ${isDark ? 'text-[#7AA897]' : 'text-[#6B9B8C]'}`}
@@ -165,7 +165,7 @@ export function AnalyticsView({ habits }: AnalyticsViewProps) {
                     </span>
                   </div>
                 </div>
-                <div className={`flex-1 rounded-full h-2 overflow-hidden ${isDark ? 'bg-[#2D3E54]' : 'bg-[#E8E6E0]'}`}>
+                <div className={`flex-1 rounded-full h-2 overflow-hidden ${isDark ? 'bg-[#354D67]' : 'bg-[#E8E6E0]'}`}>
                   <div className={`h-full transition-all ${isDark ? 'bg-[#7AA897]' : 'bg-[#6B9B8C]'}`}
                        style={{ width: `${habit.completion}%` }} />
                 </div>
@@ -180,7 +180,7 @@ export function AnalyticsView({ habits }: AnalyticsViewProps) {
         <h3 className={`font-semibold text-lg mb-2 ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>
           Mood Tracking (Last 30 Days)
         </h3>
-        <div className={`text-sm mb-4 ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>
+        <div className={`text-sm mb-4 ${isDark ? 'text-[#ABABAB]' : 'text-[#6B6B6B]'}`}>
           {trackedDays.length > 0
             ? <>Average: <span className={`font-semibold ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}
                                style={{ fontFamily: 'var(--font-mono)' }}>{avgMood.toFixed(1)}/10</span></>
@@ -194,7 +194,7 @@ export function AnalyticsView({ habits }: AnalyticsViewProps) {
                 <stop offset="95%" stopColor={isDark ? '#7AA897' : '#6B9B8C'} stopOpacity={0}/>
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#3A4A5E' : '#D4D2CA'} />
+            <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#4A5E72' : '#D4D2CA'} />
             <XAxis dataKey="date" {...axisProps} fontSize={11} interval={4} />
             <YAxis {...axisProps} domain={[0, 10]} />
             <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [v.toFixed(1), 'Mood']} />
@@ -209,7 +209,7 @@ export function AnalyticsView({ habits }: AnalyticsViewProps) {
         <h3 className={`font-semibold text-lg mb-2 ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>
           Motivation Tracking (Last 30 Days)
         </h3>
-        <div className={`text-sm mb-4 ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>
+        <div className={`text-sm mb-4 ${isDark ? 'text-[#ABABAB]' : 'text-[#6B6B6B]'}`}>
           {trackedDays.length > 0
             ? <>Average: <span className={`font-semibold ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}
                                style={{ fontFamily: 'var(--font-mono)' }}>{avgMotivation.toFixed(1)}/10</span></>
@@ -223,7 +223,7 @@ export function AnalyticsView({ habits }: AnalyticsViewProps) {
                 <stop offset="95%" stopColor={isDark ? '#7AA897' : '#6B9B8C'} stopOpacity={0}/>
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#3A4A5E' : '#D4D2CA'} />
+            <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#4A5E72' : '#D4D2CA'} />
             <XAxis dataKey="date" {...axisProps} fontSize={11} interval={4} />
             <YAxis {...axisProps} domain={[0, 10]} />
             <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [v.toFixed(1), 'Motivation']} />

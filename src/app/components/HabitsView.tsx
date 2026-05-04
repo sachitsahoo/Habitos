@@ -68,7 +68,7 @@ export function HabitsView() {
       <div className="w-full max-w-2xl">
         <Card
           className={`transition-colors border ${
-            isDark ? 'bg-[#243347] border-[#3A4A5E]' : 'bg-white border-[#D4D2CA]'
+            isDark ? 'bg-[#2A3D55] border-[#4A5E72]' : 'bg-white border-[#D4D2CA]'
           }`}
           style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)', gap: 0 }}
         >
@@ -82,11 +82,11 @@ export function HabitsView() {
             {/* Habits List */}
             <div className="space-y-3 mb-6">
               {loading ? (
-                <div className={`text-center py-16 ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>
+                <div className={`text-center py-16 ${isDark ? 'text-[#ABABAB]' : 'text-[#6B6B6B]'}`}>
                   Loading…
                 </div>
               ) : habits.length === 0 ? (
-                <div className={`text-center py-16 ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>
+                <div className={`text-center py-16 ${isDark ? 'text-[#ABABAB]' : 'text-[#6B6B6B]'}`}>
                   No habits yet. Add your first habit below!
                 </div>
               ) : habits.map((habit) => (
@@ -105,12 +105,12 @@ export function HabitsView() {
                         ? 'bg-[#1A2332] border-[#7AA897] shadow-[0_0_0_2px_rgba(122,168,151,0.25)]'
                         : 'bg-[#F8F7F4] border-[#6B9B8C] shadow-[0_0_0_2px_rgba(107,155,140,0.2)]'
                       : isDark
-                      ? 'bg-[#1A2332] border-[#3A4A5E] hover:border-[#7AA897]/30'
+                      ? 'bg-[#1A2332] border-[#4A5E72] hover:border-[#7AA897]/30'
                       : 'bg-[#F8F7F4] border-[#D4D2CA] hover:border-[#6B9B8C]/30'
                   }`}
                 >
                   <span className={`cursor-grab active:cursor-grabbing transition-colors ${
-                    isDark ? 'text-[#9B9B9B] hover:text-[#E8E6E0]' : 'text-[#6B6B6B] hover:text-[#2D2D2D]'
+                    isDark ? 'text-[#ABABAB] hover:text-[#E8E6E0]' : 'text-[#6B6B6B] hover:text-[#2D2D2D]'
                   }`}>
                     <GripVertical className="w-5 h-5" />
                   </span>
@@ -145,7 +145,7 @@ export function HabitsView() {
                     onClick={() => deleteHabit(habit.id)}
                     className={`opacity-0 group-hover:opacity-100 transition-all ${
                       isDark
-                        ? 'text-[#9B9B9B] hover:text-[#D66A6A] hover:bg-[#2D3E54]'
+                        ? 'text-[#ABABAB] hover:text-[#D66A6A] hover:bg-[#354D67]'
                         : 'text-[#6B6B6B] hover:text-[#C84C4C] hover:bg-[#E8E6E0]'
                     }`}
                   >
@@ -156,7 +156,7 @@ export function HabitsView() {
             </div>
 
             {/* Add New Habit */}
-            <div className={`border-t pt-6 ${isDark ? 'border-[#3A4A5E]' : 'border-[#D4D2CA]'}`}>
+            <div className={`border-t pt-6 ${isDark ? 'border-[#4A5E72]' : 'border-[#D4D2CA]'}`}>
               <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>
                 Add New Habit
               </label>
@@ -169,7 +169,7 @@ export function HabitsView() {
                   maxLength={100}
                   className={`flex-1 rounded-xl border-0 px-4 py-3 h-auto shadow-none focus-visible:ring-0 focus-visible:border-b-2 ${
                     isDark
-                      ? 'bg-[#1A2332] text-[#E8E6E0] placeholder:text-[#9B9B9B] focus-visible:border-[#7AA897]'
+                      ? 'bg-[#1A2332] text-[#E8E6E0] placeholder:text-[#ABABAB] focus-visible:border-[#7AA897]'
                       : 'bg-[#F8F7F4] text-[#2D2D2D] placeholder:text-[#6B6B6B] focus-visible:border-[#6B9B8C]'
                   }`}
                 />
@@ -178,7 +178,7 @@ export function HabitsView() {
                   disabled={!newHabitName.trim()}
                   className={`px-6 py-3 h-auto rounded-xl font-medium ${
                     isDark
-                      ? 'bg-[#7AA897] hover:bg-[#669989] disabled:bg-[#2D3E54] text-[#1A2332] disabled:text-[#9B9B9B]'
+                      ? 'bg-[#7AA897] hover:bg-[#669989] disabled:bg-[#354D67] text-[#1A2332] disabled:text-[#ABABAB]'
                       : 'bg-[#6B9B8C] hover:bg-[#5A8B7D] disabled:bg-[#E8E6E0] text-white disabled:text-[#6B6B6B]'
                   }`}
                 >
@@ -189,9 +189,9 @@ export function HabitsView() {
             </div>
 
             {/* Stats */}
-            <div className={`mt-6 pt-6 border-t ${isDark ? 'border-[#3A4A5E]' : 'border-[#D4D2CA]'}`}>
+            <div className={`mt-6 pt-6 border-t ${isDark ? 'border-[#4A5E72]' : 'border-[#D4D2CA]'}`}>
               <div className="flex items-center justify-between text-sm">
-                <span className={isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}>Total Habits</span>
+                <span className={isDark ? 'text-[#ABABAB]' : 'text-[#6B6B6B]'}>Total Habits</span>
                 <span
                   className={`font-semibold text-lg ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}
                   style={{ fontFamily: 'var(--font-mono)' }}

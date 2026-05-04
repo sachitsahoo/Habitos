@@ -19,7 +19,7 @@ export function CircularProgress({ percentage, size = 120, strokeWidth = 8 }: Ci
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke={isDark ? '#2D3E54' : '#E8E6E0'}
+          stroke={isDark ? '#354D67' : '#E8E6E0'}
           strokeWidth={strokeWidth}
           fill="none"
         />

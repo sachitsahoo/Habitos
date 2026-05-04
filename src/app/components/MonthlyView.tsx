@@ -84,7 +84,7 @@ export function MonthlyView({ habits }: MonthlyViewProps) {
     setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
   };
 
-  const cardClass = `rounded-xl transition-colors border ${isDark ? 'bg-[#243347] border-[#3A4A5E]' : 'bg-white border-[#D4D2CA]'}`;
+  const cardClass = `rounded-xl transition-colors border ${isDark ? 'bg-[#2A3D55] border-[#4A5E72]' : 'bg-white border-[#D4D2CA]'}`;
 
   return (
     <div className="p-6">
@@ -92,7 +92,7 @@ export function MonthlyView({ habits }: MonthlyViewProps) {
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <button onClick={previousMonth}
-            className={`p-2 rounded-lg transition-colors ${isDark ? 'bg-[#243347] hover:bg-[#2D3E54] text-[#E8E6E0]' : 'bg-white hover:bg-[#E8E6E0] text-[#2D2D2D]'}`}
+            className={`p-2 rounded-lg transition-colors ${isDark ? 'bg-[#2A3D55] hover:bg-[#354D67] text-[#E8E6E0]' : 'bg-white hover:bg-[#E8E6E0] text-[#2D2D2D]'}`}
             style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
             <ChevronLeft className="w-5 h-5" />
           </button>
@@ -100,12 +100,12 @@ export function MonthlyView({ habits }: MonthlyViewProps) {
             {currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
           </span>
           <button onClick={nextMonth}
-            className={`p-2 rounded-lg transition-colors ${isDark ? 'bg-[#243347] hover:bg-[#2D3E54] text-[#E8E6E0]' : 'bg-white hover:bg-[#E8E6E0] text-[#2D2D2D]'}`}
+            className={`p-2 rounded-lg transition-colors ${isDark ? 'bg-[#2A3D55] hover:bg-[#354D67] text-[#E8E6E0]' : 'bg-white hover:bg-[#E8E6E0] text-[#2D2D2D]'}`}
             style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
             <ChevronRight className="w-5 h-5" />
           </button>
         </div>
-        <div className={`p-4 rounded-lg ${isDark ? 'bg-[#243347]' : 'bg-white'}`}
+        <div className={`p-4 rounded-lg ${isDark ? 'bg-[#2A3D55]' : 'bg-white'}`}
              style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
           <CircularProgress percentage={getMonthCompletion()} size={80} strokeWidth={6} />
         </div>
@@ -123,7 +123,7 @@ export function MonthlyView({ habits }: MonthlyViewProps) {
                  style={{ fontFamily: 'var(--font-mono)' }}>
               {value}
             </div>
-            <div className={`text-sm mt-1 ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>{label}</div>
+            <div className={`text-sm mt-1 ${isDark ? 'text-[#ABABAB]' : 'text-[#6B6B6B]'}`}>{label}</div>
           </div>
         ))}
       </div>
@@ -134,7 +134,7 @@ export function MonthlyView({ habits }: MonthlyViewProps) {
           Habit Completion Matrix
         </h3>
         {habits.length === 0 ? (
-          <p className={`text-sm py-4 ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>
+          <p className={`text-sm py-4 ${isDark ? 'text-[#ABABAB]' : 'text-[#6B6B6B]'}`}>
             No habits yet. Add habits to track them here.
           </p>
         ) : (
@@ -147,7 +147,7 @@ export function MonthlyView({ habits }: MonthlyViewProps) {
                 const rows: number[][] = [];
                 for (let i = 0; i < days.length; i += 7) rows.push(days.slice(i, i + 7));
                 return (
-                  <div key={habit.id} className={`rounded-xl p-4 border ${isDark ? 'bg-[#1A2332] border-[#3A4A5E]' : 'bg-[#F8F7F4] border-[#D4D2CA]'}`}>
+                  <div key={habit.id} className={`rounded-xl p-4 border ${isDark ? 'bg-[#1A2332] border-[#4A5E72]' : 'bg-[#F8F7F4] border-[#D4D2CA]'}`}>
                     <div className="flex items-center justify-between mb-3">
                       <span className={`text-sm font-medium ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>{habit.name}</span>
                       <span className={`text-sm font-semibold ${isDark ? 'text-[#7AA897]' : 'text-[#6B9B8C]'}`}
@@ -160,13 +160,13 @@ export function MonthlyView({ habits }: MonthlyViewProps) {
                             <div key={day} className={`w-7 h-7 rounded-md flex items-center justify-center text-[10px] font-medium ${
                               isCompleted(day, habit.id)
                                 ? isDark ? 'bg-[#7AA897] text-[#1A2332]' : 'bg-[#6B9B8C] text-white'
-                                : isDark ? 'bg-[#2D3E54] text-[#9B9B9B]' : 'bg-[#E8E6E0] text-[#6B6B6B]'
+                                : isDark ? 'bg-[#354D67] text-[#ABABAB]' : 'bg-[#E8E6E0] text-[#6B6B6B]'
                             }`} style={{ fontFamily: 'var(--font-mono)' }}>{day}</div>
                           ))}
                         </div>
                       ))}
                     </div>
-                    <div className={`rounded-full h-1.5 overflow-hidden ${isDark ? 'bg-[#2D3E54]' : 'bg-[#E8E6E0]'}`}>
+                    <div className={`rounded-full h-1.5 overflow-hidden ${isDark ? 'bg-[#354D67]' : 'bg-[#E8E6E0]'}`}>
                       <div className={`h-full transition-all rounded-full ${isDark ? 'bg-[#7AA897]' : 'bg-[#6B9B8C]'}`}
                            style={{ width: `${completion}%` }} />
                     </div>
@@ -181,15 +181,15 @@ export function MonthlyView({ habits }: MonthlyViewProps) {
                 <thead>
                   <tr>
                     <th className={`text-left p-2 border-b font-medium text-sm sticky left-0 z-10 ${
-                      isDark ? 'border-[#3A4A5E] bg-[#243347] text-[#E8E6E0]' : 'border-[#D4D2CA] bg-white text-[#2D2D2D]'
+                      isDark ? 'border-[#4A5E72] bg-[#2A3D55] text-[#E8E6E0]' : 'border-[#D4D2CA] bg-white text-[#2D2D2D]'
                     }`}>Habit</th>
                     {Array.from({ length: daysInMonth }, (_, i) => (
                       <th key={i} className={`text-center p-2 border-b font-medium text-xs min-w-[32px] ${
-                        isDark ? 'border-[#3A4A5E] text-[#9B9B9B]' : 'border-[#D4D2CA] text-[#6B6B6B]'
+                        isDark ? 'border-[#4A5E72] text-[#ABABAB]' : 'border-[#D4D2CA] text-[#6B6B6B]'
                       }`}>{i + 1}</th>
                     ))}
                     <th className={`p-2 border-b font-medium text-sm sticky right-0 z-10 ${
-                      isDark ? 'border-[#3A4A5E] bg-[#243347] text-[#E8E6E0]' : 'border-[#D4D2CA] bg-white text-[#2D2D2D]'
+                      isDark ? 'border-[#4A5E72] bg-[#2A3D55] text-[#E8E6E0]' : 'border-[#D4D2CA] bg-white text-[#2D2D2D]'
                     }`}>Progress</th>
                   </tr>
                 </thead>
@@ -197,26 +197,26 @@ export function MonthlyView({ habits }: MonthlyViewProps) {
                   {habits.map((habit) => {
                     const completion = getHabitMonthCompletion(habit.id);
                     return (
-                      <tr key={habit.id} className={isDark ? 'hover:bg-[#2D3E54]/30' : 'hover:bg-[#F8F7F4]'}>
+                      <tr key={habit.id} className={isDark ? 'hover:bg-[#354D67]/30' : 'hover:bg-[#F8F7F4]'}>
                         <td className={`p-2 border-b text-sm sticky left-0 z-10 font-medium ${
-                          isDark ? 'border-[#3A4A5E] bg-[#243347] text-[#E8E6E0]' : 'border-[#D4D2CA] bg-white text-[#2D2D2D]'
+                          isDark ? 'border-[#4A5E72] bg-[#2A3D55] text-[#E8E6E0]' : 'border-[#D4D2CA] bg-white text-[#2D2D2D]'
                         }`}>{habit.name}</td>
                         {Array.from({ length: daysInMonth }, (_, i) => (
-                          <td key={i} className={`p-2 border-b ${isDark ? 'border-[#3A4A5E]' : 'border-[#D4D2CA]'}`}>
+                          <td key={i} className={`p-2 border-b ${isDark ? 'border-[#4A5E72]' : 'border-[#D4D2CA]'}`}>
                             <div className="flex justify-center">
                               <div className={`w-3 h-3 rounded ${
                                 isCompleted(i + 1, habit.id)
                                   ? isDark ? 'bg-[#7AA897]' : 'bg-[#6B9B8C]'
-                                  : isDark ? 'bg-[#2D3E54]' : 'bg-[#E8E6E0]'
+                                  : isDark ? 'bg-[#354D67]' : 'bg-[#E8E6E0]'
                               }`} />
                             </div>
                           </td>
                         ))}
                         <td className={`p-2 border-b sticky right-0 z-10 ${
-                          isDark ? 'border-[#3A4A5E] bg-[#243347]' : 'border-[#D4D2CA] bg-white'
+                          isDark ? 'border-[#4A5E72] bg-[#2A3D55]' : 'border-[#D4D2CA] bg-white'
                         }`}>
                           <div className="flex items-center gap-2">
-                            <div className={`flex-1 rounded-full h-2 overflow-hidden ${isDark ? 'bg-[#2D3E54]' : 'bg-[#E8E6E0]'}`}>
+                            <div className={`flex-1 rounded-full h-2 overflow-hidden ${isDark ? 'bg-[#354D67]' : 'bg-[#E8E6E0]'}`}>
                               <div className={`h-full transition-all ${isDark ? 'bg-[#7AA897]' : 'bg-[#6B9B8C]'}`}
                                    style={{ width: `${completion}%` }} />
                             </div>
@@ -249,13 +249,13 @@ export function MonthlyView({ habits }: MonthlyViewProps) {
                 <stop offset="95%" stopColor={isDark ? '#7AA897' : '#6B9B8C'} stopOpacity={0}/>
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#3A4A5E' : '#D4D2CA'} />
-            <XAxis dataKey="day" stroke={isDark ? '#9B9B9B' : '#6B6B6B'} fontSize={12} tickLine={false}
+            <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#4A5E72' : '#D4D2CA'} />
+            <XAxis dataKey="day" stroke={isDark ? '#ABABAB' : '#6B6B6B'} fontSize={12} tickLine={false}
                    style={{ fontFamily: 'var(--font-mono)' }} />
-            <YAxis stroke={isDark ? '#9B9B9B' : '#6B6B6B'} fontSize={12} tickLine={false}
+            <YAxis stroke={isDark ? '#ABABAB' : '#6B6B6B'} fontSize={12} tickLine={false}
                    domain={[0, 100]} tickFormatter={(v) => `${v}%`} style={{ fontFamily: 'var(--font-mono)' }} />
             <Tooltip
-              contentStyle={{ backgroundColor: isDark ? '#243347' : 'white', border: `1px solid ${isDark ? '#3A4A5E' : '#D4D2CA'}`, borderRadius: '12px', color: isDark ? '#E8E6E0' : '#2D2D2D', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}
+              contentStyle={{ backgroundColor: isDark ? '#2A3D55' : 'white', border: `1px solid ${isDark ? '#4A5E72' : '#D4D2CA'}`, borderRadius: '12px', color: isDark ? '#E8E6E0' : '#2D2D2D', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}
               formatter={(value: number) => [`${value.toFixed(1)}%`, 'Completion']}
             />
             <Area type="monotone" dataKey="completion" stroke={isDark ? '#7AA897' : '#6B9B8C'}

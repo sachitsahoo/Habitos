@@ -68,11 +68,11 @@ export function AuthScreen({ invitePending = false }: { invitePending?: boolean 
 
   const inputClass = `w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition-colors ${
     isDark
-      ? 'bg-[#2D3E54] border-[#3A4A5E] text-[#E8E6E0] placeholder-[#6B6B6B] focus:border-[#7AA897]'
-      : 'bg-white border-[#D4D2CA] text-[#2D2D2D] placeholder-[#9B9B9B] focus:border-[#6B9B8C]'
+      ? 'bg-[#354D67] border-[#4A5E72] text-[#E8E6E0] placeholder-[#6B6B6B] focus:border-[#7AA897]'
+      : 'bg-white border-[#D4D2CA] text-[#2D2D2D] placeholder-[#ABABAB] focus:border-[#6B9B8C]'
   }`;
 
-  const labelClass = `block text-xs font-medium mb-1.5 ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`;
+  const labelClass = `block text-xs font-medium mb-1.5 ${isDark ? 'text-[#ABABAB]' : 'text-[#6B6B6B]'}`;
 
   // ── Awaiting email confirmation ─────────────────────────────────────────────
   if (awaitingConfirmation) {
@@ -86,7 +86,7 @@ export function AuthScreen({ invitePending = false }: { invitePending?: boolean 
             <p className={`font-semibold text-lg ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>
               Check your email
             </p>
-            <p className={`text-sm mt-2 leading-relaxed ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>
+            <p className={`text-sm mt-2 leading-relaxed ${isDark ? 'text-[#ABABAB]' : 'text-[#6B6B6B]'}`}>
               We sent a confirmation link to{' '}
               <span className={`font-medium ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>{email}</span>.
               <br />Click it to activate your account.
@@ -126,14 +126,14 @@ export function AuthScreen({ invitePending = false }: { invitePending?: boolean 
           <span className={`font-semibold text-2xl ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>
             ataraxia
           </span>
-          <p className={`text-sm ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>
+          <p className={`text-sm ${isDark ? 'text-[#ABABAB]' : 'text-[#6B6B6B]'}`}>
             {mode === 'signin' ? 'Welcome back' : 'Create your account'}
           </p>
         </div>
 
         {/* Card */}
         <div
-          className={`rounded-2xl p-6 border ${isDark ? 'bg-[#243347] border-[#3A4A5E]' : 'bg-white border-[#D4D2CA]'}`}
+          className={`rounded-2xl p-6 border ${isDark ? 'bg-[#2A3D55] border-[#4A5E72]' : 'bg-white border-[#D4D2CA]'}`}
           style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}
         >
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -200,7 +200,7 @@ export function AuthScreen({ invitePending = false }: { invitePending?: boolean 
         </div>
 
         {/* Toggle */}
-        <p className={`text-center text-sm mt-4 ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>
+        <p className={`text-center text-sm mt-4 ${isDark ? 'text-[#ABABAB]' : 'text-[#6B6B6B]'}`}>
           {mode === 'signin' ? "Don't have an account? " : 'Already have an account? '}
           <button
             onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(''); }}

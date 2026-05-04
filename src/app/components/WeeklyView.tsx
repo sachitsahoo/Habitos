@@ -129,9 +129,9 @@ export function WeeklyView({ habits }: WeeklyViewProps) {
     `p-2 rounded-lg transition-colors flex-shrink-0 ${
       active
         ? isDark
-          ? 'bg-[#243347] hover:bg-[#2D3E54] text-[#E8E6E0]'
+          ? 'bg-[#2A3D55] hover:bg-[#354D67] text-[#E8E6E0]'
           : 'bg-white hover:bg-[#E8E6E0] text-[#2D2D2D]'
-        : `opacity-20 cursor-default ${isDark ? 'bg-[#243347] text-[#9B9B9B]' : 'bg-white text-[#9B9B9B]'}`
+        : `opacity-20 cursor-default ${isDark ? 'bg-[#2A3D55] text-[#ABABAB]' : 'bg-white text-[#ABABAB]'}`
     }`;
 
   const inputClass = (extra = '') =>
@@ -139,7 +139,7 @@ export function WeeklyView({ habits }: WeeklyViewProps) {
       daysToShow === 1 ? 'text-base' : 'text-sm'
     } ${
       isDark
-        ? 'bg-[#1A2332] text-[#E8E6E0] placeholder-[#9B9B9B] focus:border-b-2 focus:border-[#7AA897]'
+        ? 'bg-[#1A2332] text-[#E8E6E0] placeholder-[#ABABAB] focus:border-b-2 focus:border-[#7AA897]'
         : 'bg-[#F8F7F4] text-[#2D2D2D] placeholder-[#6B6B6B] focus:border-b-2 focus:border-[#6B9B8C]'
     } ${extra}`;
 
@@ -147,7 +147,7 @@ export function WeeklyView({ habits }: WeeklyViewProps) {
     `w-4 h-4 rounded border flex-shrink-0 transition-all cursor-pointer ${
       checked
         ? isDark ? 'bg-[#7AA897] border-[#7AA897]' : 'bg-[#6B9B8C] border-[#6B9B8C]'
-        : isDark ? 'border-[#3A4A5E] hover:border-[#7AA897]/50' : 'border-[#D4D2CA] hover:border-[#6B9B8C]/50'
+        : isDark ? 'border-[#4A5E72] hover:border-[#7AA897]/50' : 'border-[#D4D2CA] hover:border-[#6B9B8C]/50'
     }`;
 
   return (
@@ -173,7 +173,7 @@ export function WeeklyView({ habits }: WeeklyViewProps) {
             <ChevronRight className="w-5 h-5" />
           </button>
         </div>
-        <div className={`p-3 sm:p-4 rounded-lg ${isDark ? 'bg-[#243347]' : 'bg-white'}`}
+        <div className={`p-3 sm:p-4 rounded-lg ${isDark ? 'bg-[#2A3D55]' : 'bg-white'}`}
              style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
           <CircularProgress percentage={getWeekCompletion()} size={width < 640 ? 48 : 60} strokeWidth={5} />
         </div>
@@ -209,16 +209,16 @@ export function WeeklyView({ habits }: WeeklyViewProps) {
                 className={`rounded-xl p-4 sm:p-5 flex flex-col gap-4 flex-1 min-w-0 transition-colors border ${
                   isToday
                     ? isDark
-                      ? 'bg-[#243347] border-[#7AA897]/60'
+                      ? 'bg-[#2A3D55] border-[#7AA897]/60'
                       : 'bg-white border-[#6B9B8C]/60'
                     : isDark
-                    ? 'bg-[#243347] border-[#3A4A5E]'
+                    ? 'bg-[#2A3D55] border-[#4A5E72]'
                     : 'bg-white border-[#D4D2CA]'
                 }`}
                 style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}
               >
                 {/* Day Header */}
-                <div className={`text-center pb-3 border-b ${isDark ? 'border-[#3A4A5E]' : 'border-[#D4D2CA]'}`}>
+                <div className={`text-center pb-3 border-b ${isDark ? 'border-[#4A5E72]' : 'border-[#D4D2CA]'}`}>
                   <div className={`font-semibold ${daysToShow === 1 ? 'text-2xl' : 'text-lg'} ${
                     isToday
                       ? isDark ? 'text-[#7AA897]' : 'text-[#6B9B8C]'
@@ -227,7 +227,7 @@ export function WeeklyView({ habits }: WeeklyViewProps) {
                     {day.toLocaleDateString('en-US', { weekday: daysToShow === 1 ? 'long' : 'short' })}
                     {isToday && <span className={`ml-1.5 font-normal opacity-70 ${daysToShow === 1 ? 'text-sm' : 'text-xs'}`}>Today</span>}
                   </div>
-                  <div className={`${daysToShow === 1 ? 'text-base' : 'text-sm'} ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>
+                  <div className={`${daysToShow === 1 ? 'text-base' : 'text-sm'} ${isDark ? 'text-[#ABABAB]' : 'text-[#6B6B6B]'}`}>
                     {day.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </div>
                 </div>
@@ -238,16 +238,16 @@ export function WeeklyView({ habits }: WeeklyViewProps) {
                 </div>
 
                 {/* Completion Count */}
-                <div className={`text-center font-medium ${daysToShow === 1 ? 'text-base' : 'text-sm'} ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}
+                <div className={`text-center font-medium ${daysToShow === 1 ? 'text-base' : 'text-sm'} ${isDark ? 'text-[#ABABAB]' : 'text-[#6B6B6B]'}`}
                      style={{ fontFamily: 'var(--font-mono)' }}>
                   {completedCount} / {habits.length} completed
                 </div>
 
                 {/* Habits Checklist */}
                 <div className="space-y-2">
-                  <div className={`uppercase tracking-wider text-xs font-semibold ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>Habits</div>
+                  <div className={`uppercase tracking-wider text-xs font-semibold ${isDark ? 'text-[#ABABAB]' : 'text-[#6B6B6B]'}`}>Habits</div>
                   {habits.length === 0 && (
-                    <div className={`text-xs ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>
+                    <div className={`text-xs ${isDark ? 'text-[#ABABAB]' : 'text-[#6B6B6B]'}`}>
                       No habits yet. Add some in the Habits tab.
                     </div>
                   )}
@@ -256,7 +256,7 @@ export function WeeklyView({ habits }: WeeklyViewProps) {
                       <div onClick={() => toggleLog(dateKey, habit.id)} className={checkboxClass(!!dayCompletions[habit.id])} />
                       <span className={`${daysToShow === 1 ? 'text-base' : 'text-sm'} ${
                         dayCompletions[habit.id]
-                          ? isDark ? 'line-through text-[#9B9B9B]' : 'line-through text-[#6B6B6B]'
+                          ? isDark ? 'line-through text-[#ABABAB]' : 'line-through text-[#6B6B6B]'
                           : isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'
                       }`}>
                         {habit.name}
@@ -267,7 +267,7 @@ export function WeeklyView({ habits }: WeeklyViewProps) {
 
                 {/* Tasks */}
                 <div className="space-y-2">
-                  <div className={`uppercase tracking-wider text-xs font-semibold ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>Tasks</div>
+                  <div className={`uppercase tracking-wider text-xs font-semibold ${isDark ? 'text-[#ABABAB]' : 'text-[#6B6B6B]'}`}>Tasks</div>
                   {dayTasks.map((task) => (
                     <div key={task.id} className="flex items-center gap-2">
                       <div onClick={() => toggleTask(dateKey, task.id)} className={checkboxClass(task.completed)} />
@@ -282,7 +282,7 @@ export function WeeklyView({ habits }: WeeklyViewProps) {
                       <button
                         onClick={() => deleteTask(dateKey, task.id)}
                         className={`p-1 rounded-lg transition-colors ${
-                          isDark ? 'hover:bg-[#2D3E54] text-[#9B9B9B] hover:text-[#D66A6A]' : 'hover:bg-[#E8E6E0] text-[#6B6B6B] hover:text-[#C84C4C]'
+                          isDark ? 'hover:bg-[#354D67] text-[#ABABAB] hover:text-[#D66A6A]' : 'hover:bg-[#E8E6E0] text-[#6B6B6B] hover:text-[#C84C4C]'
                         }`}
                       >
                         <X className="w-4 h-4" />
@@ -302,7 +302,7 @@ export function WeeklyView({ habits }: WeeklyViewProps) {
                 {/* Notes / Improvements / Gratitude */}
                 {(['notes', 'improvements', 'gratitude'] as const).map((field) => (
                   <div key={field}>
-                    <label className={`uppercase tracking-wider text-xs font-semibold block mb-1.5 ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>
+                    <label className={`uppercase tracking-wider text-xs font-semibold block mb-1.5 ${isDark ? 'text-[#ABABAB]' : 'text-[#6B6B6B]'}`}>
                       {field.charAt(0).toUpperCase() + field.slice(1)}
                     </label>
                     <AutoResizeTextarea
@@ -323,7 +323,7 @@ export function WeeklyView({ habits }: WeeklyViewProps) {
                 <div className="grid grid-cols-2 gap-3">
                   {(['mood', 'motivation'] as const).map((field) => (
                     <div key={field}>
-                      <label className={`uppercase tracking-wider text-xs font-semibold block mb-1.5 ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>
+                      <label className={`uppercase tracking-wider text-xs font-semibold block mb-1.5 ${isDark ? 'text-[#ABABAB]' : 'text-[#6B6B6B]'}`}>
                         {field.charAt(0).toUpperCase() + field.slice(1)}
                       </label>
                       <input
