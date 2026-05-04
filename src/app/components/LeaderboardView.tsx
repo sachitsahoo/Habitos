@@ -194,16 +194,16 @@ export function LeaderboardView({ pendingInviteCode, onJoinComplete }: Leaderboa
 
   // ── Style helpers ────────────────────────────────────────────────────────
 
-  const card = `rounded-xl border transition-colors ${isDark ? 'bg-[#243347] border-[#3A4A5E]' : 'bg-white border-[#D4D2CA]'}`;
+  const card = `rounded-xl border transition-colors ${isDark ? 'bg-[#2A3D55] border-[#4A5E72]' : 'bg-white border-[#D4D2CA]'}`;
   const accentText = isDark ? 'text-[#7AA897]' : 'text-[#6B9B8C]';
-  const mutedText  = isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]';
+  const mutedText  = isDark ? 'text-[#ABABAB]' : 'text-[#6B6B6B]';
   const primaryText = isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]';
   const sectionLabel = `uppercase tracking-wider text-xs font-semibold ${mutedText}`;
-  const btnAccent = `flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-    isDark ? 'bg-[#7AA897]/20 text-[#7AA897] hover:bg-[#7AA897]/30' : 'bg-[#6B9B8C]/10 text-[#6B9B8C] hover:bg-[#6B9B8C]/20'
+  const btnAccent = `flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
+    isDark ? 'bg-[#7AA897]/25 border-[#7AA897]/40 text-[#7AA897] hover:bg-[#7AA897]/35' : 'bg-[#6B9B8C]/10 border-[#6B9B8C]/20 text-[#6B9B8C] hover:bg-[#6B9B8C]/20'
   }`;
   const btnMuted = `flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-    isDark ? 'bg-[#3A4A5E] text-[#9B9B9B] hover:text-[#D66A6A]' : 'bg-[#E8E6E0] text-[#6B6B6B] hover:text-[#C84C4C]'
+    isDark ? 'bg-[#3D5068] text-[#C8C8C8] hover:text-[#D66A6A]' : 'bg-[#E8E6E0] text-[#6B6B6B] hover:text-[#C84C4C]'
   }`;
   const inputClass = `w-full px-3.5 py-2.5 rounded-xl text-sm border outline-none transition-all ${
     isDark
@@ -387,7 +387,7 @@ export function LeaderboardView({ pendingInviteCode, onJoinComplete }: Leaderboa
                     onClick={() => setSelectedGroupId(group.id)}
                     className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-colors ${
                       selectedGroupId === group.id
-                        ? isDark ? 'bg-[#7AA897]/20 text-[#7AA897] font-medium' : 'bg-[#6B9B8C]/10 text-[#6B9B8C] font-medium'
+                        ? isDark ? 'bg-[#7AA897]/30 text-[#7AA897] font-medium' : 'bg-[#6B9B8C]/15 text-[#6B9B8C] font-medium'
                         : `${primaryText} ${isDark ? 'hover:bg-[#2D3E54]' : 'hover:bg-[#F8F7F4]'}`
                     }`}
                   >
@@ -477,7 +477,7 @@ export function LeaderboardView({ pendingInviteCode, onJoinComplete }: Leaderboa
                     onClick={() => setPeriod(p)}
                     className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
                       period === p
-                        ? isDark ? 'bg-[#7AA897]/20 text-[#7AA897]' : 'bg-[#6B9B8C]/10 text-[#6B9B8C]'
+                        ? isDark ? 'bg-[#7AA897]/30 text-[#7AA897]' : 'bg-[#6B9B8C]/15 text-[#6B9B8C]'
                         : `${mutedText} ${isDark ? 'hover:text-[#E8E6E0]' : 'hover:text-[#2D2D2D]'}`
                     }`}
                   >
@@ -532,7 +532,7 @@ export function LeaderboardView({ pendingInviteCode, onJoinComplete }: Leaderboa
                               {isMe && <span className={`text-xs font-normal flex-shrink-0 ${mutedText}`}>(you)</span>}
                               {isAdmin && (
                                 <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded flex-shrink-0 ${
-                                  isDark ? 'bg-[#7AA897]/20 text-[#7AA897]' : 'bg-[#6B9B8C]/10 text-[#6B9B8C]'
+                                  isDark ? 'bg-[#7AA897]/30 text-[#7AA897]' : 'bg-[#6B9B8C]/15 text-[#6B9B8C]'
                                 }`}>Admin</span>
                               )}
                             </div>
