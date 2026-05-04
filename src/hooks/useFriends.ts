@@ -117,17 +117,23 @@ export function useFriends() {
   }, []);
 
   const sendRequest = useCallback(async (toUserId: string, displayName: string) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    const { data, error } = await supabase.rpc('send_friend_request', { p_to_user: toUserId });
+    if (error) {
+      if (import.meta.env.DEV) console.error('sendRequest:', error.message);
+      return;
+    }
 
-    const { data, error } = await supabase
-      .from('friend_requests')
-      .insert({ from_user: user.id, to_user: toUserId, status: 'pending' })
-      .select('id')
-      .single();
+    const result = data as { action: 'sent' | 'accepted'; request_id: string };
 
-    if (!error && data) {
-      setPendingOut(prev => [...prev, { requestId: data.id, toUserId, displayName }]);
+    if (result.action === 'accepted') {
+      // Mutual request auto-accepted — move them to friends, clear both pending sides
+      const profile: DbProfile = { id: toUserId, display_name: displayName, created_at: new Date().toISOString() };
+      setPendingIn(prev => prev.filter(r => r.from_user !== toUserId));
+      setPendingOut(prev => prev.filter(r => r.toUserId !== toUserId));
+      setFriends(prev => [...prev, profile].sort((a, b) => a.display_name.localeCompare(b.display_name)));
+    } else {
+      // Normal outgoing request queued
+      setPendingOut(prev => [...prev, { requestId: result.request_id, toUserId, displayName }]);
     }
   }, []);
 
@@ -142,6 +148,8 @@ export function useFriends() {
     }
 
     setPendingIn(prev => prev.filter(r => r.id !== requestId));
+    // Also clear any outgoing request we had to this person (server already marked it accepted)
+    setPendingOut(prev => prev.filter(r => r.toUserId !== fromProfile.id));
     setFriends(prev => [...prev, fromProfile].sort((a, b) => a.display_name.localeCompare(b.display_name)));
   }, []);
 
