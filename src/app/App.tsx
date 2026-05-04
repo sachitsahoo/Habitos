@@ -55,7 +55,10 @@ function AuthenticatedApp({ user, isDark, toggleDark, pendingInviteCode, onClear
 
   const saveDisplayName = async () => {
     const trimmed = editValue.trim();
-    if (!trimmed) { setNameError('Name cannot be empty.'); return; }
+    if (!trimmed) { setIsEditingName(false); setNameError(null); return; }
+
+    // No change, or user blurred away while an error was showing — close silently
+    if (trimmed === displayName || nameError) { setIsEditingName(false); setNameError(null); return; }
 
     const previous = displayName;
     setDisplayName(trimmed);
@@ -70,8 +73,6 @@ function AuthenticatedApp({ user, isDark, toggleDark, pendingInviteCode, onClear
       const msg = error.message ?? '';
       if (msg.includes('once per day'))
         setNameError('You can only change your display name once per day.');
-      else if (msg.includes('already your display name'))
-        setNameError('That is already your display name.');
       else if (error.code === '23505' || msg.toLowerCase().includes('unique') || msg.toLowerCase().includes('already'))
         setNameError('That display name is already taken.');
       else
@@ -129,7 +130,7 @@ function AuthenticatedApp({ user, isDark, toggleDark, pendingInviteCode, onClear
                       ref={nameInputRef}
                       type="text"
                       value={editValue}
-                      onChange={e => setEditValue(e.target.value)}
+                      onChange={e => { setEditValue(e.target.value); setNameError(null); }}
                       onBlur={saveDisplayName}
                       onKeyDown={handleNameKeyDown}
                       maxLength={50}
