@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { WeeklyView } from './components/WeeklyView';
 import { MonthlyView } from './components/MonthlyView';
 import { AnalyticsView } from './components/AnalyticsView';
@@ -34,13 +34,24 @@ function AuthenticatedApp({ user, isDark, toggleDark, pendingInviteCode, onClear
   onClearInviteCode: () => void;
 }) {
   const [activeTab, setActiveTab] = useLocalStorage<Tab>(`habitos-active-tab-${user.id}`, 'weekly');
-  const { habits } = useHabits();
+  const { habits, refetch: refetchHabits } = useHabits();
   const [displayName, setDisplayName] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.from('profiles').select('display_name').eq('id', user.id).single()
       .then(({ data }) => { if (data) setDisplayName(data.display_name); });
   }, [user.id]);
+
+  // Refetch the shared habits list whenever the user leaves the Habits tab,
+  // since HabitsView has its own useHabits() instance and mutations there
+  // don't propagate back to this one automatically.
+  const prevTabRef = useRef<Tab>(activeTab);
+  useEffect(() => {
+    if (prevTabRef.current === 'habits' && activeTab !== 'habits') {
+      refetchHabits();
+    }
+    prevTabRef.current = activeTab;
+  }, [activeTab, refetchHabits]);
 
   // Auto-switch to Groups tab when an invite link was followed
   useEffect(() => {

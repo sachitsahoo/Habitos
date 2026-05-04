@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import type { DbHabit } from '../types/db';
 
@@ -9,17 +9,17 @@ export function useHabits() {
   const [habits, setHabits] = useState<DbHabit[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    supabase
+  const fetchHabits = useCallback(async () => {
+    const { data, error } = await supabase
       .from('habits')
       .select('*')
-      .order('sort_order')
-      .then(({ data, error }) => {
-        if (error && import.meta.env.DEV) console.error('useHabits fetch:', error.message);
-        if (data) setHabits(data as DbHabit[]);
-        setLoading(false);
-      });
+      .order('sort_order');
+    if (error && import.meta.env.DEV) console.error('useHabits fetch:', error.message);
+    if (data) setHabits(data as DbHabit[]);
+    setLoading(false);
   }, []);
+
+  useEffect(() => { fetchHabits(); }, [fetchHabits]);
 
   const addHabit = async (name: string) => {
     const clean = sanitize(name).trim();
@@ -82,5 +82,5 @@ export function useHabits() {
     }
   };
 
-  return { habits, loading, addHabit, deleteHabit, updateHabit, reorderHabits };
+  return { habits, loading, addHabit, deleteHabit, updateHabit, reorderHabits, refetch: fetchHabits };
 }
