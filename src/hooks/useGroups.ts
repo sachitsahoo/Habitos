@@ -102,7 +102,7 @@ export function useGroups() {
     if (error || !data) return null;
 
     const { data: group } = await supabase.from('groups').select('*').eq('id', data).single();
-    if (group) setGroups(prev => [group, ...prev]);
+    if (group) setGroups(prev => [...prev, group]);
     return data as string;
   }, []);
 
@@ -111,7 +111,7 @@ export function useGroups() {
     if (error || !data) return null;
 
     const { data: group } = await supabase.from('groups').select('*').eq('id', data).single();
-    if (group) setGroups(prev => prev.some(g => g.id === group.id) ? prev : [group, ...prev]);
+    if (group) setGroups(prev => prev.some(g => g.id === group.id) ? prev : [...prev, group]);
     return data as string;
   }, []);
 
