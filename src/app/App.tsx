@@ -251,6 +251,11 @@ function AuthenticatedApp({ user, isDark, toggleDark, pendingInviteCode, onClear
             }}
           />
         )}
+        <footer className={`flex items-center justify-center py-3 border-t text-xs ${
+          isDark ? 'border-[#4A5E72] text-[#ABABAB]' : 'border-[#D4D2CA] text-[#6B6B6B]'
+        }`}>
+          © 2026 Sachit Sahoo
+        </footer>
       </main>
 
       {/* Mobile bottom nav — hidden on desktop */}
