@@ -129,7 +129,7 @@ export function MonthlyView({ habits }: MonthlyViewProps) {
       </div>
 
       {/* Habit Completion Matrix */}
-      <div className={`${cardClass} p-6 mb-6 overflow-x-auto`} style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+      <div className={`${cardClass} p-6 mb-6`} style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
         <h3 className={`font-semibold text-lg mb-4 ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>
           Habit Completion Matrix
         </h3>
@@ -138,60 +138,101 @@ export function MonthlyView({ habits }: MonthlyViewProps) {
             No habits yet. Add habits to track them here.
           </p>
         ) : (
-          <table className="w-full border-collapse">
-            <thead>
-              <tr>
-                <th className={`text-left p-2 border-b font-medium text-sm sticky left-0 z-10 ${
-                  isDark ? 'border-[#3A4A5E] bg-[#243347] text-[#E8E6E0]' : 'border-[#D4D2CA] bg-white text-[#2D2D2D]'
-                }`}>Habit</th>
-                {Array.from({ length: daysInMonth }, (_, i) => (
-                  <th key={i} className={`text-center p-2 border-b font-medium text-xs min-w-[32px] ${
-                    isDark ? 'border-[#3A4A5E] text-[#9B9B9B]' : 'border-[#D4D2CA] text-[#6B6B6B]'
-                  }`}>{i + 1}</th>
-                ))}
-                <th className={`p-2 border-b font-medium text-sm sticky right-0 z-10 ${
-                  isDark ? 'border-[#3A4A5E] bg-[#243347] text-[#E8E6E0]' : 'border-[#D4D2CA] bg-white text-[#2D2D2D]'
-                }`}>Progress</th>
-              </tr>
-            </thead>
-            <tbody>
+          <>
+            {/* Mobile: per-habit cards */}
+            <div className="flex flex-col gap-4 sm:hidden">
               {habits.map((habit) => {
                 const completion = getHabitMonthCompletion(habit.id);
+                const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+                const rows: number[][] = [];
+                for (let i = 0; i < days.length; i += 7) rows.push(days.slice(i, i + 7));
                 return (
-                  <tr key={habit.id} className={isDark ? 'hover:bg-[#2D3E54]/30' : 'hover:bg-[#F8F7F4]'}>
-                    <td className={`p-2 border-b text-sm sticky left-0 z-10 font-medium ${
-                      isDark ? 'border-[#3A4A5E] bg-[#243347] text-[#E8E6E0]' : 'border-[#D4D2CA] bg-white text-[#2D2D2D]'
-                    }`}>{habit.name}</td>
-                    {Array.from({ length: daysInMonth }, (_, i) => (
-                      <td key={i} className={`p-2 border-b ${isDark ? 'border-[#3A4A5E]' : 'border-[#D4D2CA]'}`}>
-                        <div className="flex justify-center">
-                          <div className={`w-3 h-3 rounded ${
-                            isCompleted(i + 1, habit.id)
-                              ? isDark ? 'bg-[#7AA897]' : 'bg-[#6B9B8C]'
-                              : isDark ? 'bg-[#2D3E54]' : 'bg-[#E8E6E0]'
-                          }`} />
+                  <div key={habit.id} className={`rounded-xl p-4 border ${isDark ? 'bg-[#1A2332] border-[#3A4A5E]' : 'bg-[#F8F7F4] border-[#D4D2CA]'}`}>
+                    <div className="flex items-center justify-between mb-3">
+                      <span className={`text-sm font-medium ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>{habit.name}</span>
+                      <span className={`text-sm font-semibold ${isDark ? 'text-[#7AA897]' : 'text-[#6B9B8C]'}`}
+                            style={{ fontFamily: 'var(--font-mono)' }}>{Math.round(completion)}%</span>
+                    </div>
+                    <div className="flex flex-col gap-1 mb-3">
+                      {rows.map((row, ri) => (
+                        <div key={ri} className="flex gap-1">
+                          {row.map(day => (
+                            <div key={day} className={`w-7 h-7 rounded-md flex items-center justify-center text-[10px] font-medium ${
+                              isCompleted(day, habit.id)
+                                ? isDark ? 'bg-[#7AA897] text-[#1A2332]' : 'bg-[#6B9B8C] text-white'
+                                : isDark ? 'bg-[#2D3E54] text-[#9B9B9B]' : 'bg-[#E8E6E0] text-[#6B6B6B]'
+                            }`} style={{ fontFamily: 'var(--font-mono)' }}>{day}</div>
+                          ))}
                         </div>
-                      </td>
-                    ))}
-                    <td className={`p-2 border-b sticky right-0 z-10 ${
-                      isDark ? 'border-[#3A4A5E] bg-[#243347]' : 'border-[#D4D2CA] bg-white'
-                    }`}>
-                      <div className="flex items-center gap-2">
-                        <div className={`flex-1 rounded-full h-2 overflow-hidden ${isDark ? 'bg-[#2D3E54]' : 'bg-[#E8E6E0]'}`}>
-                          <div className={`h-full transition-all ${isDark ? 'bg-[#7AA897]' : 'bg-[#6B9B8C]'}`}
-                               style={{ width: `${completion}%` }} />
-                        </div>
-                        <span className={`text-xs font-medium min-w-[40px] text-right ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}
-                              style={{ fontFamily: 'var(--font-mono)' }}>
-                          {Math.round(completion)}%
-                        </span>
-                      </div>
-                    </td>
-                  </tr>
+                      ))}
+                    </div>
+                    <div className={`rounded-full h-1.5 overflow-hidden ${isDark ? 'bg-[#2D3E54]' : 'bg-[#E8E6E0]'}`}>
+                      <div className={`h-full transition-all rounded-full ${isDark ? 'bg-[#7AA897]' : 'bg-[#6B9B8C]'}`}
+                           style={{ width: `${completion}%` }} />
+                    </div>
+                  </div>
                 );
               })}
-            </tbody>
-          </table>
+            </div>
+
+            {/* Desktop: scrollable table */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr>
+                    <th className={`text-left p-2 border-b font-medium text-sm sticky left-0 z-10 ${
+                      isDark ? 'border-[#3A4A5E] bg-[#243347] text-[#E8E6E0]' : 'border-[#D4D2CA] bg-white text-[#2D2D2D]'
+                    }`}>Habit</th>
+                    {Array.from({ length: daysInMonth }, (_, i) => (
+                      <th key={i} className={`text-center p-2 border-b font-medium text-xs min-w-[32px] ${
+                        isDark ? 'border-[#3A4A5E] text-[#9B9B9B]' : 'border-[#D4D2CA] text-[#6B6B6B]'
+                      }`}>{i + 1}</th>
+                    ))}
+                    <th className={`p-2 border-b font-medium text-sm sticky right-0 z-10 ${
+                      isDark ? 'border-[#3A4A5E] bg-[#243347] text-[#E8E6E0]' : 'border-[#D4D2CA] bg-white text-[#2D2D2D]'
+                    }`}>Progress</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {habits.map((habit) => {
+                    const completion = getHabitMonthCompletion(habit.id);
+                    return (
+                      <tr key={habit.id} className={isDark ? 'hover:bg-[#2D3E54]/30' : 'hover:bg-[#F8F7F4]'}>
+                        <td className={`p-2 border-b text-sm sticky left-0 z-10 font-medium ${
+                          isDark ? 'border-[#3A4A5E] bg-[#243347] text-[#E8E6E0]' : 'border-[#D4D2CA] bg-white text-[#2D2D2D]'
+                        }`}>{habit.name}</td>
+                        {Array.from({ length: daysInMonth }, (_, i) => (
+                          <td key={i} className={`p-2 border-b ${isDark ? 'border-[#3A4A5E]' : 'border-[#D4D2CA]'}`}>
+                            <div className="flex justify-center">
+                              <div className={`w-3 h-3 rounded ${
+                                isCompleted(i + 1, habit.id)
+                                  ? isDark ? 'bg-[#7AA897]' : 'bg-[#6B9B8C]'
+                                  : isDark ? 'bg-[#2D3E54]' : 'bg-[#E8E6E0]'
+                              }`} />
+                            </div>
+                          </td>
+                        ))}
+                        <td className={`p-2 border-b sticky right-0 z-10 ${
+                          isDark ? 'border-[#3A4A5E] bg-[#243347]' : 'border-[#D4D2CA] bg-white'
+                        }`}>
+                          <div className="flex items-center gap-2">
+                            <div className={`flex-1 rounded-full h-2 overflow-hidden ${isDark ? 'bg-[#2D3E54]' : 'bg-[#E8E6E0]'}`}>
+                              <div className={`h-full transition-all ${isDark ? 'bg-[#7AA897]' : 'bg-[#6B9B8C]'}`}
+                                   style={{ width: `${completion}%` }} />
+                            </div>
+                            <span className={`text-xs font-medium min-w-[40px] text-right ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}
+                                  style={{ fontFamily: 'var(--font-mono)' }}>
+                              {Math.round(completion)}%
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
 
