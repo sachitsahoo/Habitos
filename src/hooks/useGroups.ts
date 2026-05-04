@@ -140,6 +140,18 @@ export function useGroups() {
     if (accept) fetchGroups();
   }, [fetchGroups]);
 
+  const kickMember = useCallback(async (groupId: string, userId: string): Promise<boolean> => {
+    const { error } = await supabase.rpc('kick_group_member', {
+      p_group_id: groupId,
+      p_user_id: userId,
+    });
+    if (error) {
+      if (import.meta.env.DEV) console.error('kickMember:', error.message);
+      return false;
+    }
+    return true;
+  }, []);
+
   const leaveGroup = useCallback(async (groupId: string): Promise<boolean> => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return false;
@@ -170,6 +182,7 @@ export function useGroups() {
     joinByCode,
     inviteFriend,
     respondToInvite,
+    kickMember,
     leaveGroup,
   };
 }

@@ -67,14 +67,15 @@ function Tooltip({ label, children }: { label: string; children: React.ReactNode
 
 export function LeaderboardView({ pendingInviteCode, onJoinComplete }: LeaderboardViewProps) {
   const { isDark } = useDarkMode();
-  const { groups, incomingInvites, loading: groupsLoading, fetchMembers, createGroup, joinByCode, inviteFriend, respondToInvite, leaveGroup } = useGroups();
-  const { friends } = useFriends();
+  const { groups, incomingInvites, loading: groupsLoading, fetchMembers, createGroup, joinByCode, inviteFriend, respondToInvite, kickMember, leaveGroup } = useGroups();
+  const { friends, friendIds, pendingOutIds, sendRequest } = useFriends();
 
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [period, setPeriod] = useState<'week' | 'month' | 'all'>('week');
   const [members, setMembers] = useState<GroupMemberWithProfile[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [addingFriendId, setAddingFriendId] = useState<string | null>(null);
+  const [kickingUserId, setKickingUserId] = useState<string | null>(null);
   const [showAddFriend, setShowAddFriend] = useState(false);
   const [copied, setCopied] = useState(false);
   const [joiningCode, setJoiningCode] = useState(false);
@@ -173,6 +174,9 @@ export function LeaderboardView({ pendingInviteCode, onJoinComplete }: Leaderboa
   const selectedGroup = groups.find(g => g.id === selectedGroupId);
   const memberUserIds = new Set(members.map(m => m.user_id));
   const friendsNotInGroup = friends.filter(f => !memberUserIds.has(f.id));
+  // Map user_id → role for quick lookup in leaderboard rows
+  const memberRoleMap = new Map(members.map(m => [m.user_id, m.role]));
+  const currentUserIsAdmin = memberRoleMap.get(currentUserId ?? '') === 'admin';
 
   // ── Style helpers ────────────────────────────────────────────────────────
 
@@ -484,6 +488,12 @@ export function LeaderboardView({ pendingInviteCode, onJoinComplete }: Leaderboa
                       const isMe = row.user_id === currentUserId;
                       const m = medal(i);
                       const pct = Math.round(row.completion * 100);
+                      const role = memberRoleMap.get(row.user_id);
+                      const isAdmin = role === 'admin';
+                      const canKick = currentUserIsAdmin && !isMe && !isAdmin;
+                      const isAlreadyFriend = friendIds.has(row.user_id);
+                      const hasPendingRequest = pendingOutIds.has(row.user_id);
+                      const canAddFriend = !isMe && !isAlreadyFriend && !hasPendingRequest;
                       return (
                         <div
                           key={row.user_id}
@@ -503,9 +513,14 @@ export function LeaderboardView({ pendingInviteCode, onJoinComplete }: Leaderboa
                             {row.display_name.charAt(0).toUpperCase()}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className={`text-sm font-medium truncate ${isMe ? accentText : primaryText}`}>
-                              {row.display_name}
-                              {isMe && <span className={`ml-1 text-xs font-normal ${mutedText}`}>(you)</span>}
+                            <div className={`text-sm font-medium flex items-center gap-1.5 truncate ${isMe ? accentText : primaryText}`}>
+                              <span className="truncate">{row.display_name}</span>
+                              {isMe && <span className={`text-xs font-normal flex-shrink-0 ${mutedText}`}>(you)</span>}
+                              {isAdmin && (
+                                <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded flex-shrink-0 ${
+                                  isDark ? 'bg-[#7AA897]/20 text-[#7AA897]' : 'bg-[#6B9B8C]/10 text-[#6B9B8C]'
+                                }`}>Admin</span>
+                              )}
                             </div>
                             <div className="flex items-center gap-2 mt-1">
                               <div className={`flex-1 rounded-full h-1.5 overflow-hidden ${isDark ? 'bg-[#2D3E54]' : 'bg-[#E8E6E0]'}`}>
@@ -521,6 +536,57 @@ export function LeaderboardView({ pendingInviteCode, onJoinComplete }: Leaderboa
                                 {pct}%
                               </span>
                             </div>
+                          </div>
+                          {/* Action buttons */}
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            {canAddFriend && (
+                              <Tooltip label={hasPendingRequest ? 'Request sent' : 'Add friend'}>
+                                <button
+                                  onClick={() => sendRequest(row.user_id, row.display_name)}
+                                  className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
+                                    isDark
+                                      ? 'text-[#9B9B9B] hover:text-[#7AA897] hover:bg-[#2D3E54]'
+                                      : 'text-[#9B9B9B] hover:text-[#6B9B8C] hover:bg-[#E8E6E0]'
+                                  }`}
+                                >
+                                  <UserPlus className="w-3.5 h-3.5" />
+                                </button>
+                              </Tooltip>
+                            )}
+                            {hasPendingRequest && !isMe && (
+                              <Tooltip label="Request sent">
+                                <span className={`w-7 h-7 rounded-lg flex items-center justify-center ${
+                                  isDark ? 'text-[#7AA897]' : 'text-[#6B9B8C]'
+                                }`}>
+                                  <UserCheck className="w-3.5 h-3.5" />
+                                </span>
+                              </Tooltip>
+                            )}
+                            {canKick && (
+                              <Tooltip label="Remove from group">
+                                <button
+                                  disabled={kickingUserId === row.user_id}
+                                  onClick={async () => {
+                                    if (!selectedGroupId) return;
+                                    setKickingUserId(row.user_id);
+                                    const ok = await kickMember(selectedGroupId, row.user_id);
+                                    if (ok) {
+                                      setMembers(prev => prev.filter(m => m.user_id !== row.user_id));
+                                    }
+                                    setKickingUserId(null);
+                                  }}
+                                  className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors disabled:opacity-50 ${
+                                    isDark
+                                      ? 'text-[#9B9B9B] hover:text-red-400 hover:bg-[#2D3E54]'
+                                      : 'text-[#9B9B9B] hover:text-red-500 hover:bg-[#E8E6E0]'
+                                  }`}
+                                >
+                                  {kickingUserId === row.user_id
+                                    ? <span className="w-3 h-3 rounded-full border border-current border-t-transparent animate-spin" />
+                                    : <UserX className="w-3.5 h-3.5" />}
+                                </button>
+                              </Tooltip>
+                            )}
                           </div>
                         </div>
                       );
