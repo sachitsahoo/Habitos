@@ -59,5 +59,5 @@ export function useLeaderboard(groupId: string | null, period: 'week' | 'month' 
     return () => window.removeEventListener('focus', fetch);
   }, [fetch]);
 
-  return { rows, loading };
+  return { rows, loading, refetch: fetch };
 }

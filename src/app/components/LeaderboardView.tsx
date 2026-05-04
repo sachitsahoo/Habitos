@@ -101,7 +101,7 @@ export function LeaderboardView({ pendingInviteCode, onJoinComplete }: Leaderboa
   const [modalError, setModalError] = useState('');
   const [modalLoading, setModalLoading] = useState(false);
 
-  const { rows, loading: lbLoading } = useLeaderboard(selectedGroupId, period);
+  const { rows, loading: lbLoading, refetch: refetchLeaderboard } = useLeaderboard(selectedGroupId, period);
 
   // ── Effects ──────────────────────────────────────────────────────────────
 
@@ -586,6 +586,7 @@ export function LeaderboardView({ pendingInviteCode, onJoinComplete }: Leaderboa
                                     const ok = await kickMember(selectedGroupId, row.user_id);
                                     if (ok) {
                                       setMembers(prev => prev.filter(m => m.user_id !== row.user_id));
+                                      refetchLeaderboard();
                                     }
                                     setKickingUserId(null);
                                   }}
