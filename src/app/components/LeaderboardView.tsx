@@ -504,6 +504,14 @@ export function LeaderboardView({ pendingInviteCode, onJoinComplete }: Leaderboa
                   </div>
                 ) : (
                   <div>
+                    {/* Column header */}
+                    <div className={`flex items-center gap-3 sm:gap-4 px-4 py-2 border-b ${isDark ? 'border-[#4A5E72]' : 'border-[#D4D2CA]'}`}>
+                      <div className="w-7 flex-shrink-0" />
+                      <div className="w-8 flex-shrink-0" />
+                      <div className={`flex-1 flex items-center justify-end pr-1 gap-1 text-[11px] font-semibold uppercase tracking-wider ${mutedText}`}>
+                        Habit completion
+                      </div>
+                    </div>
                     {rows.map((row, i) => {
                       const isMe = row.user_id === currentUserId;
                       const m = medal(i);
