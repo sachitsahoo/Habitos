@@ -37,7 +37,7 @@ export function useGroups() {
         .from('groups')
         .select('*')
         .in('id', groupIds)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: true });
       setGroups(groupData ?? []);
       setLoading(false);
     }
@@ -171,6 +171,21 @@ export function useGroups() {
     return true;
   }, []);
 
+  const deleteGroup = useCallback(async (groupId: string): Promise<boolean> => {
+    const { error } = await supabase
+      .from('groups')
+      .delete()
+      .eq('id', groupId);
+
+    if (error) {
+      if (import.meta.env.DEV) console.error('deleteGroup:', error.message);
+      return false;
+    }
+
+    setGroups(prev => prev.filter(g => g.id !== groupId));
+    return true;
+  }, []);
+
   return {
     groups,
     incomingInvites,
@@ -184,5 +199,6 @@ export function useGroups() {
     respondToInvite,
     kickMember,
     leaveGroup,
+    deleteGroup,
   };
 }

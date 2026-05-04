@@ -1,7 +1,8 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { Search, UserPlus, UserCheck, UserX, Users, Clock, X } from 'lucide-react';
 import { useDarkMode } from '../context/DarkModeContext';
 import { useFriends } from '../../hooks/useFriends';
+import { ConfirmDialog } from './ConfirmDialog';
 import type { DbProfile } from '../../types/db';
 
 function debounce<T extends (...args: Parameters<T>) => void>(fn: T, ms: number) {
@@ -25,6 +26,9 @@ export function FriendsView() {
   const [results, setResults] = useState<DbProfile[]>([]);
   const [searching, setSearching] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [confirmAdd, setConfirmAdd] = useState<DbProfile | null>(null);
+  const [confirmRemove, setConfirmRemove] = useState<{ id: string; name: string } | null>(null);
+  const [confirmActionLoading, setConfirmActionLoading] = useState(false);
 
   // Debounced search
   const doSearch = useCallback(
@@ -44,13 +48,19 @@ export function FriendsView() {
   };
 
   const handleSend = async (profile: DbProfile) => {
+    setConfirmActionLoading(true);
     await sendRequest(profile.id, profile.display_name);
+    setConfirmActionLoading(false);
+    setConfirmAdd(null);
   };
 
   const handleRemove = async (friendId: string) => {
+    setConfirmActionLoading(true);
     setRemovingId(friendId);
     await removeFriend(friendId);
     setRemovingId(null);
+    setConfirmActionLoading(false);
+    setConfirmRemove(null);
   };
 
   // Shared class helpers
@@ -81,7 +91,7 @@ export function FriendsView() {
     );
     return (
       <button
-        onClick={() => handleSend(profile)}
+        onClick={() => setConfirmAdd(profile)}
         className={`flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-lg transition-colors ${
           isDark ? 'bg-[#7AA897]/20 text-[#7AA897] hover:bg-[#7AA897]/30' : 'bg-[#6B9B8C]/10 text-[#6B9B8C] hover:bg-[#6B9B8C]/20'
         }`}
@@ -218,7 +228,7 @@ export function FriendsView() {
                 <Avatar name={friend.display_name} />
                 <span className={`flex-1 text-sm font-medium ${primaryText}`}>{friend.display_name}</span>
                 <button
-                  onClick={() => handleRemove(friend.id)}
+                  onClick={() => setConfirmRemove({ id: friend.id, name: friend.display_name })}
                   disabled={removingId === friend.id}
                   className={`opacity-0 group-hover:opacity-100 p-1.5 rounded-lg transition-all ${
                     isDark ? 'text-[#ABABAB] hover:text-[#D66A6A] hover:bg-[#4A5E72]' : 'text-[#6B6B6B] hover:text-[#C84C4C] hover:bg-[#E8E6E0]'
@@ -232,6 +242,29 @@ export function FriendsView() {
           </div>
         )}
       </div>
+
+      {confirmAdd && (
+        <ConfirmDialog
+          title="Add friend"
+          message={`Send a friend request to ${confirmAdd.display_name}?`}
+          confirmLabel="Send request"
+          loading={confirmActionLoading}
+          onConfirm={() => handleSend(confirmAdd)}
+          onCancel={() => setConfirmAdd(null)}
+        />
+      )}
+
+      {confirmRemove && (
+        <ConfirmDialog
+          title="Remove friend"
+          message={`Remove ${confirmRemove.name} from your friends?`}
+          confirmLabel="Remove"
+          destructive
+          loading={confirmActionLoading}
+          onConfirm={() => handleRemove(confirmRemove.id)}
+          onCancel={() => setConfirmRemove(null)}
+        />
+      )}
     </div>
   );
 }

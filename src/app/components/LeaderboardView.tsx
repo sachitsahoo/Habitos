@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Plus, Copy, Check, UserPlus, LogOut, Trophy, Users, Link, X, UserCheck, UserX } from 'lucide-react';
+import { Plus, Copy, Check, UserPlus, LogOut, Trophy, Users, Link, X, UserCheck, UserX, Trash2 } from 'lucide-react';
 import { useDarkMode } from '../context/DarkModeContext';
 import { useGroups } from '../../hooks/useGroups';
 import { useLeaderboard } from '../../hooks/useLeaderboard';
 import { useFriends } from '../../hooks/useFriends';
 import { supabase } from '../../lib/supabase';
+import { ConfirmDialog } from './ConfirmDialog';
 import type { GroupMemberWithProfile } from '../../hooks/useGroups';
 
 interface LeaderboardViewProps {
@@ -81,7 +82,7 @@ function Tooltip({ label, children }: { label: string; children: React.ReactNode
 
 export function LeaderboardView({ pendingInviteCode, onJoinComplete }: LeaderboardViewProps) {
   const { isDark } = useDarkMode();
-  const { groups, incomingInvites, loading: groupsLoading, fetchMembers, createGroup, joinByCode, inviteFriend, respondToInvite, kickMember, leaveGroup } = useGroups();
+  const { groups, incomingInvites, loading: groupsLoading, fetchMembers, createGroup, joinByCode, inviteFriend, respondToInvite, kickMember, leaveGroup, deleteGroup } = useGroups();
   const { friends, friendIds, pendingOutIds, sendRequest } = useFriends();
 
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
@@ -93,6 +94,11 @@ export function LeaderboardView({ pendingInviteCode, onJoinComplete }: Leaderboa
   const [showAddFriend, setShowAddFriend] = useState(false);
   const [copied, setCopied] = useState(false);
   const [joiningCode, setJoiningCode] = useState(false);
+
+  // Confirm dialog state
+  const [confirmKick, setConfirmKick] = useState<{ userId: string; name: string } | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmActionLoading, setConfirmActionLoading] = useState(false);
 
   // Modal state
   const [modal, setModal] = useState<'create' | 'join' | null>(null);
@@ -580,16 +586,7 @@ export function LeaderboardView({ pendingInviteCode, onJoinComplete }: Leaderboa
                               <Tooltip label="Remove from group">
                                 <button
                                   disabled={kickingUserId === row.user_id}
-                                  onClick={async () => {
-                                    if (!selectedGroupId) return;
-                                    setKickingUserId(row.user_id);
-                                    const ok = await kickMember(selectedGroupId, row.user_id);
-                                    if (ok) {
-                                      setMembers(prev => prev.filter(m => m.user_id !== row.user_id));
-                                      refetchLeaderboard();
-                                    }
-                                    setKickingUserId(null);
-                                  }}
+                                  onClick={() => setConfirmKick({ userId: row.user_id, name: row.display_name })}
                                   className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors disabled:opacity-50 ${
                                     isDark
                                       ? 'text-[#ABABAB] hover:text-red-400 hover:bg-[#354D67]'
@@ -610,8 +607,13 @@ export function LeaderboardView({ pendingInviteCode, onJoinComplete }: Leaderboa
                 )}
               </div>
 
-              {/* Leave group */}
-              <div className="flex justify-end">
+              {/* Leave / Delete group */}
+              <div className="flex justify-end gap-2">
+                {currentUserIsAdmin && (
+                  <button onClick={() => setConfirmDelete(true)} className={btnMuted}>
+                    <Trash2 className="w-3.5 h-3.5" /> Delete group
+                  </button>
+                )}
                 <button
                   onClick={async () => {
                     if (!selectedGroupId) return;
@@ -627,6 +629,51 @@ export function LeaderboardView({ pendingInviteCode, onJoinComplete }: Leaderboa
           )}
         </div>
       </div>
+
+      {/* Confirm kick */}
+      {confirmKick && (
+        <ConfirmDialog
+          title={`Remove ${confirmKick.name}?`}
+          message={`${confirmKick.name} will be removed from the group. They can rejoin with an invite link.`}
+          confirmLabel="Remove"
+          destructive
+          loading={confirmActionLoading}
+          onCancel={() => setConfirmKick(null)}
+          onConfirm={async () => {
+            if (!selectedGroupId) return;
+            setConfirmActionLoading(true);
+            setKickingUserId(confirmKick.userId);
+            const ok = await kickMember(selectedGroupId, confirmKick.userId);
+            if (ok) {
+              setMembers(prev => prev.filter(m => m.user_id !== confirmKick.userId));
+              refetchLeaderboard();
+            }
+            setKickingUserId(null);
+            setConfirmActionLoading(false);
+            setConfirmKick(null);
+          }}
+        />
+      )}
+
+      {/* Confirm delete group */}
+      {confirmDelete && selectedGroup && (
+        <ConfirmDialog
+          title={`Delete "${selectedGroup.name}"?`}
+          message="This will permanently delete the group and remove all members. This cannot be undone."
+          confirmLabel="Delete group"
+          destructive
+          loading={confirmActionLoading}
+          onCancel={() => setConfirmDelete(false)}
+          onConfirm={async () => {
+            if (!selectedGroupId) return;
+            setConfirmActionLoading(true);
+            const ok = await deleteGroup(selectedGroupId);
+            if (ok) setSelectedGroupId(null);
+            setConfirmActionLoading(false);
+            setConfirmDelete(false);
+          }}
+        />
+      )}
     </>
   );
 }
