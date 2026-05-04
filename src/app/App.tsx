@@ -6,6 +6,7 @@ import { HabitsView } from './components/HabitsView';
 import { FriendsView } from './components/FriendsView';
 import { LeaderboardView } from './components/LeaderboardView';
 import { AuthScreen } from './components/AuthScreen';
+import { IOSInstallBanner } from './components/IOSInstallBanner';
 import { Moon, Sun, LogOut } from 'lucide-react';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useHabits } from '../hooks/useHabits';
@@ -128,7 +129,7 @@ function AuthenticatedApp({ user, isDark, toggleDark, pendingInviteCode, onClear
             <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
               isDark ? 'bg-[#7AA897]' : 'bg-[#6B9B8C]'
             }`}>
-              <span className="text-white font-semibold text-base sm:text-lg">A</span>
+              <span className="text-white font-semibold text-base sm:text-lg">a</span>
             </div>
 
             {/* Desktop: editable display name */}
@@ -308,6 +309,7 @@ export default function App() {
           />
         : <AuthScreen invitePending={!!pendingInviteCode} />
       }
+      <IOSInstallBanner />
     </DarkModeContext.Provider>
   );
 }

@@ -75,7 +75,7 @@ export function AuthScreen({ invitePending = false }: { invitePending?: boolean 
       <div className={`size-full flex items-center justify-center ${isDark ? 'bg-[#1A2332]' : 'bg-[#F8F7F4]'}`}>
         <div className="w-full max-w-sm px-4 text-center flex flex-col items-center gap-6">
           <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${isDark ? 'bg-[#7AA897]' : 'bg-[#6B9B8C]'}`}>
-            <span className="text-white font-semibold text-2xl">A</span>
+            <span className="text-white font-semibold text-2xl">a</span>
           </div>
           <div>
             <p className={`font-semibold text-lg ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>
@@ -116,7 +116,7 @@ export function AuthScreen({ invitePending = false }: { invitePending?: boolean 
         {/* Logo */}
         <div className="flex flex-col items-center gap-3 mb-8">
           <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${isDark ? 'bg-[#7AA897]' : 'bg-[#6B9B8C]'}`}>
-            <span className="text-white font-semibold text-2xl">A</span>
+            <span className="text-white font-semibold text-2xl">a</span>
           </div>
           <span className={`font-semibold text-2xl ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>
             Ataraxia
