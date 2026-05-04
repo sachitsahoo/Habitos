@@ -15,7 +15,7 @@ export function IOSInstallBanner() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    if (isIOS() && !isInStandaloneMode() && !localStorage.getItem('ataraxia_ios_banner_dismissed')) {
+    if (isIOS() && !isInStandaloneMode() && !sessionStorage.getItem('ataraxia_ios_banner_dismissed')) {
       // Small delay so it doesn't flash on load
       const t = setTimeout(() => setVisible(true), 1500);
       return () => clearTimeout(t);
@@ -24,7 +24,7 @@ export function IOSInstallBanner() {
 
   const dismiss = () => {
     setVisible(false);
-    localStorage.setItem('ataraxia_ios_banner_dismissed', '1');
+    sessionStorage.setItem('ataraxia_ios_banner_dismissed', '1');
   };
 
   if (!visible) return null;
