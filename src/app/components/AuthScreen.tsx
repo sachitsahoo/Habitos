@@ -5,7 +5,12 @@ import { useDarkMode } from '../context/DarkModeContext';
 type Mode = 'signin' | 'signup';
 
 function mapAuthError(err: unknown): string {
-  const msg = err instanceof Error ? err.message : String(err);
+  // Supabase AuthError extends Error; PostgrestError does not — handle both
+  const msg = err instanceof Error
+    ? err.message
+    : (err && typeof err === 'object' && 'message' in err)
+      ? String((err as { message: unknown }).message)
+      : String(err);
   const code = (err as { code?: string }).code ?? '';
   if (code === '23505' || msg.includes('already exists') || msg.includes('duplicate'))
     return 'Display name already taken. Please choose another.';

@@ -1,11 +1,35 @@
+# ataraxia
 
-  # Ataraxia
+a habit tracker i built for myself. tracks daily habits, visualizes streaks and completion, and lets you compete with friends on a leaderboard.
 
-  This is a habit tracking project I build for myself to help organize the tasks and habits in my life. The visualization helps boost motivation and gratification, treating basic habits as things I get to check off the list. 
+live at [ataraxia.today](https://ataraxia.today)
 
-  ## Running the code
+## stack
 
-  Run `npm i` to install the dependencies.
+- react 18 + typescript + vite
+- tailwind css v4 + shadcn/ui
+- supabase (auth + database)
+- recharts
 
-  Run `npm run dev` to start the development server.
-  
+## features
+
+- daily and monthly habit tracking
+- streak and completion analytics
+- friends system with leaderboard
+- group invite links
+- dark mode
+- installable as a mobile app (pwa)
+
+## dev
+
+```bash
+pnpm install
+pnpm dev
+```
+
+requires a `.env.local` with:
+
+```
+VITE_SUPABASE_URL=...
+VITE_SUPABASE_PUBLISHABLE_KEY=...
+```
