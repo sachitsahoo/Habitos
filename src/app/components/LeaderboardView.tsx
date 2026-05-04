@@ -67,7 +67,7 @@ function Tooltip({ label, children }: { label: string; children: React.ReactNode
 
 export function LeaderboardView({ pendingInviteCode, onJoinComplete }: LeaderboardViewProps) {
   const { isDark } = useDarkMode();
-  const { groups, incomingInvites, loading: groupsLoading, fetchMembers, createGroup, joinByCode, inviteFriend, respondToInvite } = useGroups();
+  const { groups, incomingInvites, loading: groupsLoading, fetchMembers, createGroup, joinByCode, inviteFriend, respondToInvite, leaveGroup } = useGroups();
   const { friends } = useFriends();
 
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
@@ -533,11 +533,9 @@ export function LeaderboardView({ pendingInviteCode, onJoinComplete }: Leaderboa
               <div className="flex justify-end">
                 <button
                   onClick={async () => {
-                    const { data: { user } } = await supabase.auth.getUser();
-                    if (!user || !selectedGroupId) return;
-                    await supabase.from('group_members').delete()
-                      .eq('group_id', selectedGroupId).eq('user_id', user.id);
-                    window.location.reload();
+                    if (!selectedGroupId) return;
+                    const ok = await leaveGroup(selectedGroupId);
+                    if (ok) setSelectedGroupId(null);
                   }}
                   className={btnMuted}
                 >

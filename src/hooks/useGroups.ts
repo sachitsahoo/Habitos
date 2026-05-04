@@ -140,6 +140,25 @@ export function useGroups() {
     if (accept) fetchGroups();
   }, [fetchGroups]);
 
+  const leaveGroup = useCallback(async (groupId: string): Promise<boolean> => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
+    const { error } = await supabase
+      .from('group_members')
+      .delete()
+      .eq('group_id', groupId)
+      .eq('user_id', user.id);
+
+    if (error) {
+      if (import.meta.env.DEV) console.error('leaveGroup:', error.message);
+      return false;
+    }
+
+    setGroups(prev => prev.filter(g => g.id !== groupId));
+    return true;
+  }, []);
+
   return {
     groups,
     incomingInvites,
@@ -151,5 +170,6 @@ export function useGroups() {
     joinByCode,
     inviteFriend,
     respondToInvite,
+    leaveGroup,
   };
 }
