@@ -33,7 +33,7 @@ function AuthenticatedApp({ user, isDark, toggleDark, pendingInviteCode, onClear
   pendingInviteCode: string | null;
   onClearInviteCode: () => void;
 }) {
-  const [activeTab, setActiveTab] = useLocalStorage<Tab>(`habitos-active-tab-${user.id}`, 'weekly');
+  const [activeTab, setActiveTab] = useLocalStorage<Tab>(`ataraxia-active-tab-${user.id}`, 'weekly');
   const { habits, refetch: refetchHabits } = useHabits();
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -140,7 +140,7 @@ function AuthenticatedApp({ user, isDark, toggleDark, pendingInviteCode, onClear
                       }`}
                     />
                     <span className={`font-semibold text-base sm:text-xl flex-shrink-0 ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>
-                      's HabitOS
+                      's Ataraxia
                     </span>
                   </div>
                   {nameError && (
@@ -155,14 +155,14 @@ function AuthenticatedApp({ user, isDark, toggleDark, pendingInviteCode, onClear
                     isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'
                   }`}
                 >
-                  {displayName ? `${displayName}'s HabitOS` : 'HabitOS'}
+                  {displayName ? `${displayName}'s Ataraxia` : 'Ataraxia'}
                 </button>
               )}
             </div>
 
             {/* Mobile: static, no edit */}
             <span className={`sm:hidden font-semibold text-base ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>
-              HabitOS
+              Ataraxia
             </span>
           </div>
 
@@ -247,7 +247,7 @@ function AuthenticatedApp({ user, isDark, toggleDark, pendingInviteCode, onClear
 // ─── Root ───────────────────────────────────────────────────────────────────
 
 export default function App() {
-  const [isDark, setIsDark] = useLocalStorage('habitos-dark', false);
+  const [isDark, setIsDark] = useLocalStorage('ataraxia-dark', false);
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [pendingInviteCode, setPendingInviteCode] = useState<string | null>(() => {
