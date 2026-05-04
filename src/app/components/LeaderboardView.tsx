@@ -86,7 +86,7 @@ export function LeaderboardView({ pendingInviteCode, onJoinComplete }: Leaderboa
   const { friends, friendIds, pendingOutIds, sendRequest } = useFriends();
 
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
-  const [period, setPeriod] = useState<'week' | 'month' | 'all'>('week');
+  const [period, setPeriod] = useState<'day' | 'week' | 'month' | 'all'>('week');
   const [members, setMembers] = useState<GroupMemberWithProfile[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [addingFriendId, setAddingFriendId] = useState<string | null>(null);
@@ -477,7 +477,7 @@ export function LeaderboardView({ pendingInviteCode, onJoinComplete }: Leaderboa
 
               {/* Period picker */}
               <div className={`${card} p-1 flex`} style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
-                {(['week', 'month', 'all'] as const).map(p => (
+                {(['day', 'week', 'month', 'all'] as const).map(p => (
                   <button
                     key={p}
                     onClick={() => setPeriod(p)}
@@ -487,7 +487,7 @@ export function LeaderboardView({ pendingInviteCode, onJoinComplete }: Leaderboa
                         : `${mutedText} ${isDark ? 'hover:text-[#E8E6E0]' : 'hover:text-[#2D2D2D]'}`
                     }`}
                   >
-                    {p === 'week' ? 'Last 7 Days' : p === 'month' ? 'This Month' : 'All Time'}
+                    {p === 'day' ? 'Today' : p === 'week' ? 'Last 7 Days' : p === 'month' ? 'This Month' : 'All Time'}
                   </button>
                 ))}
               </div>

@@ -7,9 +7,12 @@ function toDateKey(d: Date): string {
 }
 
 // Compute start date in the user's local timezone — never relies on server current_date
-function getPeriodStartDate(period: 'week' | 'month' | 'all'): string {
+function getPeriodStartDate(period: 'day' | 'week' | 'month' | 'all'): string {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  if (period === 'day') {
+    return toDateKey(today); // today only
+  }
   if (period === 'week') {
     const d = new Date(today);
     d.setDate(d.getDate() - 6); // rolling last 7 days
@@ -21,7 +24,7 @@ function getPeriodStartDate(period: 'week' | 'month' | 'all'): string {
   return '2000-01-01';
 }
 
-export function useLeaderboard(groupId: string | null, period: 'week' | 'month' | 'all') {
+export function useLeaderboard(groupId: string | null, period: 'day' | 'week' | 'month' | 'all') {
   const [rows, setRows] = useState<LeaderboardRow[]>([]);
   const [loading, setLoading] = useState(false);
 
