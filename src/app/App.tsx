@@ -236,21 +236,23 @@ function AuthenticatedApp({ user, isDark, toggleDark, pendingInviteCode, onClear
       </header>
 
       {/* Content Area — extra bottom padding on mobile for the nav bar */}
-      <main className="flex-1 overflow-auto pb-[calc(64px+env(safe-area-inset-bottom))] sm:pb-0">
-        {activeTab === 'weekly'    && <WeeklyView habits={habits} />}
-        {activeTab === 'monthly'   && <MonthlyView habits={habits} />}
-        {activeTab === 'analytics' && <AnalyticsView habits={habits} />}
-        {activeTab === 'habits'    && <HabitsView />}
-        {activeTab === 'friends'   && <FriendsView />}
-        {activeTab === 'leaderboard' && (
-          <LeaderboardView
-            pendingInviteCode={pendingInviteCode}
-            onJoinComplete={() => {
-              onClearInviteCode();
-              setActiveTab('leaderboard');
-            }}
-          />
-        )}
+      <main className="flex-1 overflow-auto flex flex-col pb-[calc(64px+env(safe-area-inset-bottom))] sm:pb-0">
+        <div className="flex-1">
+          {activeTab === 'weekly'    && <WeeklyView habits={habits} />}
+          {activeTab === 'monthly'   && <MonthlyView habits={habits} />}
+          {activeTab === 'analytics' && <AnalyticsView habits={habits} />}
+          {activeTab === 'habits'    && <HabitsView />}
+          {activeTab === 'friends'   && <FriendsView />}
+          {activeTab === 'leaderboard' && (
+            <LeaderboardView
+              pendingInviteCode={pendingInviteCode}
+              onJoinComplete={() => {
+                onClearInviteCode();
+                setActiveTab('leaderboard');
+              }}
+            />
+          )}
+        </div>
         <footer className={`flex items-center justify-center py-3 border-t text-xs ${
           isDark ? 'border-[#4A5E72] text-[#ABABAB]' : 'border-[#D4D2CA] text-[#6B6B6B]'
         }`}>
