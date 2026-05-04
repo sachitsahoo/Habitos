@@ -2,7 +2,13 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import type { DbTask } from '../types/db';
 
+// Strip null bytes — Postgres rejects them in text columns
+const sanitize = (s: string) => s.replace(/\0/g, '');
+
 type TasksByDate = Record<string, DbTask[]>;
+
+// Track in-flight addTask calls per date to prevent rapid double-click phantom rows
+const addingRef: Record<string, boolean> = {};
 
 export function useTasks(startDate: string, endDate: string) {
   const [tasksByDate, setTasksByDate] = useState<TasksByDate>({});
@@ -18,7 +24,7 @@ export function useTasks(startDate: string, endDate: string) {
       .lte('task_date', endDate)
       .order('created_at')
       .then(({ data, error }) => {
-        if (error) console.error('useTasks fetch:', error.message);
+        if (error && import.meta.env.DEV) console.error('useTasks fetch:', error.message);
         const map: TasksByDate = {};
         for (const row of (data ?? []) as DbTask[]) {
           if (!map[row.task_date]) map[row.task_date] = [];
@@ -30,8 +36,12 @@ export function useTasks(startDate: string, endDate: string) {
   }, [startDate, endDate]);
 
   const addTask = async (date: string) => {
+    // Prevent rapid double-click from creating multiple phantom rows
+    if (addingRef[date]) return;
+    addingRef[date] = true;
+
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) { addingRef[date] = false; return; }
 
     const tempId = `temp-${Date.now()}`;
     const optimistic: DbTask = {
@@ -55,26 +65,28 @@ export function useTasks(startDate: string, endDate: string) {
         [date]: (prev[date] ?? []).map(t => t.id === tempId ? data as DbTask : t),
       }));
     } else {
-      console.error('addTask:', error?.message);
+      if (import.meta.env.DEV) console.error('addTask:', error?.message);
       setTasksByDate(prev => ({
         ...prev,
         [date]: (prev[date] ?? []).filter(t => t.id !== tempId),
       }));
     }
+    addingRef[date] = false;
   };
 
   const updateTask = (date: string, id: string, text: string) => {
+    const clean = sanitize(text);
     // Update local state immediately
     setTasksByDate(prev => ({
       ...prev,
-      [date]: (prev[date] ?? []).map(t => t.id === id ? { ...t, text } : t),
+      [date]: (prev[date] ?? []).map(t => t.id === id ? { ...t, text: clean } : t),
     }));
     // Debounce DB write (300ms)
     clearTimeout(debounceRef.current[id]);
     debounceRef.current[id] = setTimeout(async () => {
       if (id.startsWith('temp-')) return; // not yet committed
-      const { error } = await supabase.from('tasks').update({ text }).eq('id', id);
-      if (error) console.error('updateTask:', error.message);
+      const { error } = await supabase.from('tasks').update({ text: clean }).eq('id', id);
+      if (error && import.meta.env.DEV) console.error('updateTask:', error.message);
     }, 300);
   };
 
@@ -87,7 +99,7 @@ export function useTasks(startDate: string, endDate: string) {
       [date]: (prev[date] ?? []).map(t => t.id === id ? { ...t, completed: next } : t),
     }));
     const { error } = await supabase.from('tasks').update({ completed: next }).eq('id', id);
-    if (error) console.error('toggleTask:', error.message);
+    if (error && import.meta.env.DEV) console.error('toggleTask:', error.message);
   };
 
   const deleteTask = async (date: string, id: string) => {
@@ -97,7 +109,7 @@ export function useTasks(startDate: string, endDate: string) {
     }));
     if (!id.startsWith('temp-')) {
       const { error } = await supabase.from('tasks').delete().eq('id', id);
-      if (error) console.error('deleteTask:', error.message);
+      if (error && import.meta.env.DEV) console.error('deleteTask:', error.message);
     }
   };
 

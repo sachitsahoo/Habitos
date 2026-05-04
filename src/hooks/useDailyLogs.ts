@@ -2,6 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import type { DbDailyLog } from '../types/db';
 
+// Strip null bytes — Postgres rejects them in text columns
+const sanitize = (s: string) => s.replace(/\0/g, '');
+
 type LogsByDate = Record<string, Partial<DbDailyLog>>;
 
 export function useDailyLogs(startDate: string, endDate: string) {
@@ -17,7 +20,7 @@ export function useDailyLogs(startDate: string, endDate: string) {
       .gte('log_date', startDate)
       .lte('log_date', endDate)
       .then(({ data, error }) => {
-        if (error) console.error('useDailyLogs fetch:', error.message);
+        if (error && import.meta.env.DEV) console.error('useDailyLogs fetch:', error.message);
         const map: LogsByDate = {};
         for (const row of (data ?? []) as DbDailyLog[]) {
           map[row.log_date] = row;
@@ -32,10 +35,11 @@ export function useDailyLogs(startDate: string, endDate: string) {
     field: 'notes' | 'improvements' | 'gratitude' | 'mood' | 'motivation',
     value: string | number
   ) => {
+    const clean = typeof value === 'string' ? sanitize(value) : value;
     // Update local state immediately
     setLogsByDate(prev => ({
       ...prev,
-      [date]: { ...(prev[date] ?? {}), [field]: value },
+      [date]: { ...(prev[date] ?? {}), [field]: clean },
     }));
 
     // Debounce DB upsert (500ms)
@@ -56,12 +60,11 @@ export function useDailyLogs(startDate: string, endDate: string) {
           gratitude: existing.gratitude ?? '',
           mood: existing.mood ?? null,
           motivation: existing.motivation ?? null,
-          [field]: value,
-          updated_at: new Date().toISOString(),
+          [field]: clean,
         },
         { onConflict: 'user_id,log_date' }
       );
-      if (error) console.error('updateLog:', error.message);
+      if (error && import.meta.env.DEV) console.error('updateLog:', error.message);
     }, 500);
   };
 

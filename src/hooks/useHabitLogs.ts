@@ -17,7 +17,7 @@ export function useHabitLogs(startDate: string, endDate: string) {
       .gte('log_date', startDate)
       .lte('log_date', endDate)
       .then(({ data, error }) => {
-        if (error) console.error('useHabitLogs fetch:', error.message);
+        if (error && import.meta.env.DEV) console.error('useHabitLogs fetch:', error.message);
         const map: Completions = {};
         for (const row of (data ?? []) as DbHabitLog[]) {
           if (!map[row.log_date]) map[row.log_date] = {};
@@ -44,7 +44,7 @@ export function useHabitLogs(startDate: string, endDate: string) {
       { onConflict: 'user_id,habit_id,log_date' }
     );
     if (error) {
-      console.error('toggleLog:', error.message);
+      if (import.meta.env.DEV) console.error('toggleLog:', error.message);
       // Revert
       setCompletions(prev => ({
         ...prev,

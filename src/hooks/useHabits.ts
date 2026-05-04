@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import type { DbHabit } from '../types/db';
 
+// Strip null bytes — Postgres rejects them in text columns
+const sanitize = (s: string) => s.replace(/\0/g, '');
+
 export function useHabits() {
   const [habits, setHabits] = useState<DbHabit[]>([]);
   const [loading, setLoading] = useState(true);
@@ -12,13 +15,15 @@ export function useHabits() {
       .select('*')
       .order('sort_order')
       .then(({ data, error }) => {
-        if (error) console.error('useHabits fetch:', error.message);
+        if (error && import.meta.env.DEV) console.error('useHabits fetch:', error.message);
         if (data) setHabits(data as DbHabit[]);
         setLoading(false);
       });
   }, []);
 
   const addHabit = async (name: string) => {
+    const clean = sanitize(name).trim();
+    if (!clean) return;
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
@@ -27,7 +32,7 @@ export function useHabits() {
     const optimistic: DbHabit = {
       id: tempId,
       user_id: user.id,
-      name,
+      name: clean,
       sort_order,
       created_at: new Date().toISOString(),
     };
@@ -35,14 +40,14 @@ export function useHabits() {
 
     const { data, error } = await supabase
       .from('habits')
-      .insert({ name, sort_order, user_id: user.id })
+      .insert({ name: clean, sort_order, user_id: user.id })
       .select()
       .single();
 
     if (data && !error) {
       setHabits(prev => prev.map(h => h.id === tempId ? data as DbHabit : h));
     } else {
-      console.error('addHabit:', error?.message);
+      if (import.meta.env.DEV) console.error('addHabit:', error?.message);
       setHabits(prev => prev.filter(h => h.id !== tempId));
     }
   };
@@ -50,13 +55,15 @@ export function useHabits() {
   const deleteHabit = async (id: string) => {
     setHabits(prev => prev.filter(h => h.id !== id));
     const { error } = await supabase.from('habits').delete().eq('id', id);
-    if (error) console.error('deleteHabit:', error.message);
+    if (error && import.meta.env.DEV) console.error('deleteHabit:', error.message);
   };
 
   const updateHabit = async (id: string, name: string) => {
-    setHabits(prev => prev.map(h => h.id === id ? { ...h, name } : h));
-    const { error } = await supabase.from('habits').update({ name }).eq('id', id);
-    if (error) console.error('updateHabit:', error.message);
+    const clean = sanitize(name).trim();
+    if (!clean) return;
+    setHabits(prev => prev.map(h => h.id === id ? { ...h, name: clean } : h));
+    const { error } = await supabase.from('habits').update({ name: clean }).eq('id', id);
+    if (error && import.meta.env.DEV) console.error('updateHabit:', error.message);
   };
 
   const reorderHabits = async (reordered: DbHabit[]) => {
