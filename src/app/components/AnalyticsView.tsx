@@ -5,11 +5,18 @@ import { useDailyLogs } from '../../hooks/useDailyLogs';
 import type { Habit } from '../App';
 
 function toDateKey(d: Date): string {
-  return d.toISOString().split('T')[0];
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-function daysAgo(n: number): Date {
-  const d = new Date();
+// Midnight-normalize a date so arithmetic never drifts across DST boundaries
+function startOfDay(d: Date): Date {
+  const out = new Date(d);
+  out.setHours(0, 0, 0, 0);
+  return out;
+}
+
+function daysAgo(base: Date, n: number): Date {
+  const d = new Date(base);
   d.setDate(d.getDate() - n);
   return d;
 }
@@ -19,17 +26,20 @@ interface AnalyticsViewProps { habits: Habit[] }
 export function AnalyticsView({ habits }: AnalyticsViewProps) {
   const { isDark } = useDarkMode();
 
+  // Capture today once — midnight-normalized so all date arithmetic uses the same base
+  const today = startOfDay(new Date());
+
   // Fetch 90 days for streak accuracy, 30 days for daily logs
-  const startDate90 = toDateKey(daysAgo(89));
-  const startDate30 = toDateKey(daysAgo(29));
-  const endDate     = toDateKey(new Date());
+  const startDate90 = toDateKey(daysAgo(today, 89));
+  const startDate30 = toDateKey(daysAgo(today, 29));
+  const endDate     = toDateKey(today);
 
   const { completions } = useHabitLogs(startDate90, endDate);
   const { logsByDate }  = useDailyLogs(startDate30, endDate);
 
   // Last 30 days chart data
   const last30Days = Array.from({ length: 30 }, (_, i) => {
-    const d = daysAgo(29 - i);
+    const d = daysAgo(today, 29 - i);
     const key = toDateKey(d);
     const dayLog = logsByDate[key];
     const dayCompletions = completions[key] ?? {};
@@ -49,7 +59,7 @@ export function AnalyticsView({ habits }: AnalyticsViewProps) {
     // Current streak: count back from today
     let currentStreak = 0;
     for (let i = 0; i < 90; i++) {
-      const key = toDateKey(daysAgo(i));
+      const key = toDateKey(daysAgo(today, i));
       if (completions[key]?.[habit.id]) currentStreak++;
       else break;
     }
@@ -57,7 +67,7 @@ export function AnalyticsView({ habits }: AnalyticsViewProps) {
     // Best streak in 90-day window
     let bestStreak = 0, run = 0;
     for (let i = 89; i >= 0; i--) {
-      const key = toDateKey(daysAgo(i));
+      const key = toDateKey(daysAgo(today, i));
       if (completions[key]?.[habit.id]) {
         run++;
         bestStreak = Math.max(bestStreak, run);
@@ -70,7 +80,7 @@ export function AnalyticsView({ habits }: AnalyticsViewProps) {
     // Completion % over days that have any log data in 90-day window
     let total = 0, done = 0;
     for (let i = 0; i < 90; i++) {
-      const key = toDateKey(daysAgo(i));
+      const key = toDateKey(daysAgo(today, i));
       if (completions[key] !== undefined) {
         total++;
         if (completions[key][habit.id]) done++;

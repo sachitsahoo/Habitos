@@ -4,7 +4,7 @@ import { useDarkMode } from '../context/DarkModeContext';
 
 type Mode = 'signin' | 'signup';
 
-export function AuthScreen() {
+export function AuthScreen({ invitePending = false }: { invitePending?: boolean }) {
   const { isDark } = useDarkMode();
   const [mode, setMode] = useState<Mode>('signin');
   const [displayName, setDisplayName] = useState('');
@@ -30,7 +30,7 @@ export function AuthScreen() {
         if (data.user) {
           const { error: profileError } = await supabase
             .from('profiles')
-            .insert({ id: data.user.id, display_name: displayName.trim() });
+            .upsert({ id: data.user.id, display_name: displayName.trim() }, { onConflict: 'id' });
           if (profileError) throw profileError;
         }
       } else {
@@ -55,6 +55,17 @@ export function AuthScreen() {
   return (
     <div className={`size-full flex items-center justify-center ${isDark ? 'bg-[#1A2332]' : 'bg-[#F8F7F4]'}`}>
       <div className="w-full max-w-sm px-4">
+        {/* Invite banner */}
+        {invitePending && (
+          <div className={`mb-6 px-4 py-3 rounded-xl text-sm text-center border ${
+            isDark
+              ? 'bg-[#7AA897]/10 border-[#7AA897]/30 text-[#7AA897]'
+              : 'bg-[#6B9B8C]/10 border-[#6B9B8C]/30 text-[#6B9B8C]'
+          }`}>
+            You've been invited to a group — sign in or sign up to auto-join.
+          </div>
+        )}
+
         {/* Logo */}
         <div className="flex flex-col items-center gap-3 mb-8">
           <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${isDark ? 'bg-[#7AA897]' : 'bg-[#6B9B8C]'}`}>
@@ -84,6 +95,7 @@ export function AuthScreen() {
                   value={displayName}
                   onChange={e => setDisplayName(e.target.value)}
                   autoComplete="name"
+                  maxLength={50}
                   required
                 />
               </div>

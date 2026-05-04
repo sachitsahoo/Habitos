@@ -45,8 +45,11 @@ export function MonthlyView({ habits }: MonthlyViewProps) {
   };
 
   const getCurrentStreak = (): number => {
+    const today = new Date();
+    const isCurrentMonth = year === today.getFullYear() && month === today.getMonth();
+    const startDay = isCurrentMonth ? today.getDate() : daysInMonth;
     let streak = 0;
-    for (let day = daysInMonth; day >= 1; day--) {
+    for (let day = startDay; day >= 1; day--) {
       if (getDayCompletion(day) >= 80) streak++;
       else break;
     }
@@ -75,14 +78,10 @@ export function MonthlyView({ habits }: MonthlyViewProps) {
   }));
 
   const previousMonth = () => {
-    const d = new Date(currentDate);
-    d.setMonth(d.getMonth() - 1);
-    setCurrentDate(d);
+    setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
   };
   const nextMonth = () => {
-    const d = new Date(currentDate);
-    d.setMonth(d.getMonth() + 1);
-    setCurrentDate(d);
+    setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
   };
 
   const cardClass = `rounded-xl transition-colors border ${isDark ? 'bg-[#243347] border-[#3A4A5E]' : 'bg-white border-[#D4D2CA]'}`;

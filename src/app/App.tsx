@@ -3,6 +3,8 @@ import { WeeklyView } from './components/WeeklyView';
 import { MonthlyView } from './components/MonthlyView';
 import { AnalyticsView } from './components/AnalyticsView';
 import { HabitsView } from './components/HabitsView';
+import { FriendsView } from './components/FriendsView';
+import { LeaderboardView } from './components/LeaderboardView';
 import { AuthScreen } from './components/AuthScreen';
 import { Moon, Sun, LogOut } from 'lucide-react';
 import { useLocalStorage } from './hooks/useLocalStorage';
@@ -12,7 +14,7 @@ import { supabase } from '../lib/supabase';
 import { DarkModeContext } from './context/DarkModeContext';
 import type { User } from '@supabase/supabase-js';
 
-export type Tab = 'weekly' | 'monthly' | 'analytics' | 'habits';
+export type Tab = 'weekly' | 'monthly' | 'analytics' | 'habits' | 'friends' | 'leaderboard';
 
 // Minimal habit shape needed by views — DbHabit satisfies this.
 export interface Habit {
@@ -24,13 +26,26 @@ export interface Habit {
 // Only mounts once `user` is known, so the localStorage key is stable from
 // the very first render (no stale reads from a previous user's data).
 
-function AuthenticatedApp({ user: _user, isDark, toggleDark }: {
+function AuthenticatedApp({ user, isDark, toggleDark, pendingInviteCode, onClearInviteCode }: {
   user: User;
   isDark: boolean;
   toggleDark: () => void;
+  pendingInviteCode: string | null;
+  onClearInviteCode: () => void;
 }) {
-  const [activeTab, setActiveTab] = useState<Tab>('weekly');
+  const [activeTab, setActiveTab] = useLocalStorage<Tab>(`habitos-active-tab-${user.id}`, 'weekly');
   const { habits } = useHabits();
+  const [displayName, setDisplayName] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.from('profiles').select('display_name').eq('id', user.id).single()
+      .then(({ data }) => { if (data) setDisplayName(data.display_name); });
+  }, [user.id]);
+
+  // Auto-switch to Groups tab when an invite link was followed
+  useEffect(() => {
+    if (pendingInviteCode) setActiveTab('leaderboard');
+  }, [pendingInviteCode]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -54,7 +69,7 @@ function AuthenticatedApp({ user: _user, isDark, toggleDark }: {
             <span className={`font-semibold text-base sm:text-xl ${
               isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'
             }`}>
-              <span className="hidden xs:inline">Sachit's </span>HabitOS
+              {displayName && <span className="hidden sm:inline">{displayName}'s </span>}HabitOS
             </span>
           </div>
 
@@ -92,6 +107,8 @@ function AuthenticatedApp({ user: _user, isDark, toggleDark }: {
             { id: 'monthly',   label: 'Monthly' },
             { id: 'analytics', label: 'Analytics' },
             { id: 'habits',    label: 'Habits' },
+            { id: 'friends',     label: 'Friends' },
+            { id: 'leaderboard', label: 'Groups' },
           ] as const).map((tab) => (
             <button
               key={tab.id}
@@ -119,6 +136,16 @@ function AuthenticatedApp({ user: _user, isDark, toggleDark }: {
         {activeTab === 'monthly'   && <MonthlyView habits={habits} />}
         {activeTab === 'analytics' && <AnalyticsView habits={habits} />}
         {activeTab === 'habits'    && <HabitsView />}
+        {activeTab === 'friends'   && <FriendsView />}
+        {activeTab === 'leaderboard' && (
+          <LeaderboardView
+            pendingInviteCode={pendingInviteCode}
+            onJoinComplete={(groupId) => {
+              onClearInviteCode();
+              setActiveTab('leaderboard');
+            }}
+          />
+        )}
       </main>
     </div>
   );
@@ -130,6 +157,11 @@ export default function App() {
   const [isDark, setIsDark] = useLocalStorage('habitos-dark', false);
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [pendingInviteCode, setPendingInviteCode] = useState<string | null>(() => {
+    const code = new URLSearchParams(window.location.search).get('join');
+    if (code) window.history.replaceState({}, '', window.location.pathname);
+    return code;
+  });
 
   const toggleDark = () => setIsDark(prev => !prev);
 
@@ -163,8 +195,14 @@ export default function App() {
   return (
     <DarkModeContext.Provider value={{ isDark, toggleDark }}>
       {user
-        ? <AuthenticatedApp user={user} isDark={isDark} toggleDark={toggleDark} />
-        : <AuthScreen />
+        ? <AuthenticatedApp
+            user={user}
+            isDark={isDark}
+            toggleDark={toggleDark}
+            pendingInviteCode={pendingInviteCode}
+            onClearInviteCode={() => setPendingInviteCode(null)}
+          />
+        : <AuthScreen invitePending={!!pendingInviteCode} />
       }
     </DarkModeContext.Provider>
   );

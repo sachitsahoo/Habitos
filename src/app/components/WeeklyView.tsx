@@ -23,7 +23,7 @@ function getWeekDays(baseDate: Date): Date[] {
 }
 
 function toDateKey(d: Date) {
-  return d.toISOString().split('T')[0];
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 export function WeeklyView({ habits }: WeeklyViewProps) {
@@ -31,9 +31,8 @@ export function WeeklyView({ habits }: WeeklyViewProps) {
   const width = useWindowWidth();
   const daysToShow = width < 640 ? 1 : width < 1024 ? 2 : 3;
 
-  const [currentDate, setCurrentDate] = useState(new Date().toISOString());
-  const parsedDate = new Date(currentDate);
-  const weekDays = getWeekDays(parsedDate);
+  const [currentDate, setCurrentDate] = useState(() => new Date());
+  const weekDays = getWeekDays(currentDate);
   const startDate = toDateKey(weekDays[0]);
   const endDate   = toDateKey(weekDays[6]);
 
@@ -62,16 +61,16 @@ export function WeeklyView({ habits }: WeeklyViewProps) {
   const goNext = () => setGroupStart(prev => Math.min(7 - daysToShow, prev + daysToShow));
 
   const previousWeek = () => {
-    const d = new Date(parsedDate);
+    const d = new Date(currentDate);
     d.setDate(d.getDate() - 7);
-    setCurrentDate(d.toISOString());
+    setCurrentDate(d);
     setGroupStart(0);
   };
 
   const nextWeek = () => {
-    const d = new Date(parsedDate);
+    const d = new Date(currentDate);
     d.setDate(d.getDate() + 7);
-    setCurrentDate(d.toISOString());
+    setCurrentDate(d);
     setGroupStart(0);
   };
 
@@ -247,6 +246,7 @@ export function WeeklyView({ habits }: WeeklyViewProps) {
                         value={task.text}
                         onChange={(e) => updateTask(dateKey, task.id, e.target.value)}
                         placeholder="Task..."
+                        maxLength={200}
                         className={inputClass('flex-1 py-1.5')}
                       />
                       <button
@@ -283,6 +283,7 @@ export function WeeklyView({ habits }: WeeklyViewProps) {
                         : field === 'improvements' ? 'What can I improve?'
                         : 'I\'m grateful for…'
                       }
+                      maxLength={2000}
                       className={inputClass()}
                       rows={2}
                     />

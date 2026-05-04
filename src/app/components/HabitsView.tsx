@@ -121,6 +121,7 @@ export function HabitsView() {
                       onBlur={(e) => handleUpdate(habit.id, e.target.value)}
                       onKeyDown={(e) => handleKeyDown(e, habit.id)}
                       autoFocus
+                      maxLength={100}
                       className={`flex-1 border-0 border-b-2 rounded-none shadow-none focus-visible:ring-0 px-1 py-1 h-auto text-base ${
                         isDark
                           ? 'bg-transparent text-[#E8E6E0] border-[#7AA897]'
@@ -165,6 +166,7 @@ export function HabitsView() {
                   onChange={(e) => setNewHabitName(e.target.value)}
                   onKeyDown={(e) => handleKeyDown(e)}
                   placeholder="Enter habit name..."
+                  maxLength={100}
                   className={`flex-1 rounded-xl border-0 px-4 py-3 h-auto shadow-none focus-visible:ring-0 focus-visible:border-b-2 ${
                     isDark
                       ? 'bg-[#1A2332] text-[#E8E6E0] placeholder:text-[#9B9B9B] focus-visible:border-[#7AA897]'
