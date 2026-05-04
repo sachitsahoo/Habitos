@@ -35,7 +35,10 @@ function AuthenticatedApp({ user, isDark, toggleDark, pendingInviteCode, onClear
 }) {
   const [activeTab, setActiveTab] = useLocalStorage<Tab>(`ataraxia-active-tab-${user.id}`, 'weekly');
   const { habits, refetch: refetchHabits } = useHabits();
-  const [displayName, setDisplayName] = useState<string | null>(null);
+  const cacheKey = `ataraxia_display_name_${user.id}`;
+  const [displayName, setDisplayName] = useState<string | null>(
+    () => localStorage.getItem(cacheKey)
+  );
   const [isEditingName, setIsEditingName] = useState(false);
   const [editValue, setEditValue] = useState('');
   const [nameError, setNameError] = useState<string | null>(null);
@@ -43,7 +46,12 @@ function AuthenticatedApp({ user, isDark, toggleDark, pendingInviteCode, onClear
 
   useEffect(() => {
     supabase.from('profiles').select('display_name').eq('id', user.id).single()
-      .then(({ data }) => { if (data) setDisplayName(data.display_name); });
+      .then(({ data }) => {
+        if (data) {
+          setDisplayName(data.display_name);
+          localStorage.setItem(cacheKey, data.display_name);
+        }
+      });
   }, [user.id]);
 
   const startEditingName = () => {
@@ -62,12 +70,14 @@ function AuthenticatedApp({ user, isDark, toggleDark, pendingInviteCode, onClear
 
     const previous = displayName;
     setDisplayName(trimmed);
+    localStorage.setItem(cacheKey, trimmed);
     setIsEditingName(false);
     setNameError(null);
 
     const { error } = await supabase.rpc('update_display_name', { p_new_name: trimmed });
     if (error) {
       setDisplayName(previous);
+      if (previous) localStorage.setItem(cacheKey, previous); else localStorage.removeItem(cacheKey);
       setIsEditingName(true);
       setEditValue(trimmed);
       const msg = error.message ?? '';
