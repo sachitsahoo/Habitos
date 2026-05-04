@@ -1,4 +1,34 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useLayoutEffect } from 'react';
+
+function AutoResizeTextarea({ value, onChange, placeholder, maxLength, className }: {
+  value: string;
+  onChange: (val: string) => void;
+  placeholder?: string;
+  maxLength?: number;
+  className?: string;
+}) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = el.scrollHeight + 'px';
+  }, [value]);
+
+  return (
+    <textarea
+      ref={ref}
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      placeholder={placeholder}
+      maxLength={maxLength}
+      rows={1}
+      className={className}
+      style={{ overflow: 'hidden', resize: 'none' }}
+    />
+  );
+}
 import { CircularProgress } from './CircularProgress';
 import { ChevronLeft, ChevronRight, Plus, X } from 'lucide-react';
 import { useDarkMode } from '../context/DarkModeContext';
@@ -275,9 +305,9 @@ export function WeeklyView({ habits }: WeeklyViewProps) {
                     <label className={`uppercase tracking-wider text-xs font-semibold block mb-1.5 ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>
                       {field.charAt(0).toUpperCase() + field.slice(1)}
                     </label>
-                    <textarea
+                    <AutoResizeTextarea
                       value={dayLog?.[field] ?? ''}
-                      onChange={(e) => updateLog(dateKey, field, e.target.value)}
+                      onChange={(val) => updateLog(dateKey, field, val)}
                       placeholder={
                         field === 'notes' ? 'Daily notes…'
                         : field === 'improvements' ? 'What can I improve?'
@@ -285,7 +315,6 @@ export function WeeklyView({ habits }: WeeklyViewProps) {
                       }
                       maxLength={2000}
                       className={inputClass()}
-                      rows={2}
                     />
                   </div>
                 ))}
