@@ -89,6 +89,12 @@ export function useFriends() {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
+  // Re-fetch when the tab regains focus so friend requests / friend list stay fresh
+  useEffect(() => {
+    window.addEventListener('focus', fetchAll);
+    return () => window.removeEventListener('focus', fetchAll);
+  }, [fetchAll]);
+
   // Search profiles excluding self, existing friends, and already-requested users
   const searchUsers = useCallback(async (query: string): Promise<DbProfile[]> => {
     const trimmed = query.trim();
