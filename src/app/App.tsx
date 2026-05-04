@@ -36,11 +36,53 @@ function AuthenticatedApp({ user, isDark, toggleDark, pendingInviteCode, onClear
   const [activeTab, setActiveTab] = useLocalStorage<Tab>(`habitos-active-tab-${user.id}`, 'weekly');
   const { habits, refetch: refetchHabits } = useHabits();
   const [displayName, setDisplayName] = useState<string | null>(null);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editValue, setEditValue] = useState('');
+  const [nameError, setNameError] = useState<string | null>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     supabase.from('profiles').select('display_name').eq('id', user.id).single()
       .then(({ data }) => { if (data) setDisplayName(data.display_name); });
   }, [user.id]);
+
+  const startEditingName = () => {
+    setEditValue(displayName ?? '');
+    setNameError(null);
+    setIsEditingName(true);
+    setTimeout(() => nameInputRef.current?.focus(), 0);
+  };
+
+  const saveDisplayName = async () => {
+    const trimmed = editValue.trim();
+    if (!trimmed) { setNameError('Name cannot be empty.'); return; }
+
+    const previous = displayName;
+    setDisplayName(trimmed);
+    setIsEditingName(false);
+    setNameError(null);
+
+    const { error } = await supabase.rpc('update_display_name', { p_new_name: trimmed });
+    if (error) {
+      setDisplayName(previous);
+      setIsEditingName(true);
+      setEditValue(trimmed);
+      const msg = error.message ?? '';
+      if (msg.includes('once per day'))
+        setNameError('You can only change your display name once per day.');
+      else if (msg.includes('already your display name'))
+        setNameError('That is already your display name.');
+      else if (error.code === '23505' || msg.toLowerCase().includes('unique') || msg.toLowerCase().includes('already'))
+        setNameError('That display name is already taken.');
+      else
+        setNameError(msg || 'Could not save display name.');
+    }
+  };
+
+  const handleNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') { e.preventDefault(); saveDisplayName(); }
+    if (e.key === 'Escape') { setIsEditingName(false); setNameError(null); }
+  };
 
   // Refetch the shared habits list whenever the user leaves the Habits tab,
   // since HabitsView has its own useHabits() instance and mutations there
@@ -77,10 +119,50 @@ function AuthenticatedApp({ user, isDark, toggleDark, pendingInviteCode, onClear
             }`}>
               <span className="text-white font-semibold text-base sm:text-lg">H</span>
             </div>
-            <span className={`font-semibold text-base sm:text-xl ${
-              isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'
-            }`}>
-              {displayName && <span className="hidden sm:inline">{displayName}'s </span>}HabitOS
+
+            {/* Desktop: editable display name */}
+            <div className="hidden sm:flex flex-col">
+              {isEditingName ? (
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-1">
+                    <input
+                      ref={nameInputRef}
+                      type="text"
+                      value={editValue}
+                      onChange={e => setEditValue(e.target.value)}
+                      onBlur={saveDisplayName}
+                      onKeyDown={handleNameKeyDown}
+                      maxLength={50}
+                      className={`font-semibold text-base sm:text-xl w-32 sm:w-44 px-2 py-0.5 rounded-lg border outline-none transition-colors ${
+                        isDark
+                          ? 'bg-[#2D3E54] border-[#3A4A5E] text-[#E8E6E0] focus:border-[#7AA897]'
+                          : 'bg-[#F8F7F4] border-[#D4D2CA] text-[#2D2D2D] focus:border-[#6B9B8C]'
+                      }`}
+                    />
+                    <span className={`font-semibold text-base sm:text-xl flex-shrink-0 ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>
+                      's HabitOS
+                    </span>
+                  </div>
+                  {nameError && (
+                    <p className="text-xs text-[#C84C4C]">{nameError}</p>
+                  )}
+                </div>
+              ) : (
+                <button
+                  onClick={startEditingName}
+                  title="Click to edit your display name"
+                  className={`font-semibold text-base sm:text-xl text-left transition-opacity hover:opacity-60 ${
+                    isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'
+                  }`}
+                >
+                  {displayName ? `${displayName}'s HabitOS` : 'HabitOS'}
+                </button>
+              )}
+            </div>
+
+            {/* Mobile: static, no edit */}
+            <span className={`sm:hidden font-semibold text-base ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>
+              HabitOS
             </span>
           </div>
 

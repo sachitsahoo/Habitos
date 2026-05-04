@@ -14,6 +14,6 @@ export const supabase = createClient(supabaseUrl, supabasePublishableKey, {
   auth: {
     persistSession: true,       // store session in localStorage → survives page reloads
     autoRefreshToken: true,     // silently refresh access token before it expires
-    detectSessionInUrl: false,  // email+password only — no magic-link/OAuth token in URL fragment
+    detectSessionInUrl: true,   // needed to process email confirmation token in URL hash on redirect
   },
 })

@@ -4,6 +4,16 @@ import { useDarkMode } from '../context/DarkModeContext';
 
 type Mode = 'signin' | 'signup';
 
+function mapAuthError(err: unknown): string {
+  const msg = err instanceof Error ? err.message : String(err);
+  const code = (err as { code?: string }).code ?? '';
+  if (code === '23505' || msg.includes('already exists') || msg.includes('duplicate'))
+    return 'Display name already taken. Please choose another.';
+  if (msg.toLowerCase().includes('user already registered'))
+    return 'An account with this email already exists.';
+  return msg || 'Something went wrong.';
+}
+
 export function AuthScreen({ invitePending = false }: { invitePending?: boolean }) {
   const { isDark } = useDarkMode();
   const [mode, setMode] = useState<Mode>('signin');
@@ -12,6 +22,7 @@ export function AuthScreen({ invitePending = false }: { invitePending?: boolean 
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [awaitingConfirmation, setAwaitingConfirmation] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,12 +44,18 @@ export function AuthScreen({ invitePending = false }: { invitePending?: boolean 
             .upsert({ id: data.user.id, display_name: displayName.trim() }, { onConflict: 'id' });
           if (profileError) throw profileError;
         }
+
+        // data.session is null when email confirmation is required
+        if (!data.session) {
+          setAwaitingConfirmation(true);
+          return;
+        }
       } else {
         const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
         if (signInError) throw signInError;
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Something went wrong.');
+      setError(mapAuthError(err));
     } finally {
       setLoading(false);
     }
@@ -52,6 +69,36 @@ export function AuthScreen({ invitePending = false }: { invitePending?: boolean 
 
   const labelClass = `block text-xs font-medium mb-1.5 ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`;
 
+  // ── Awaiting email confirmation ─────────────────────────────────────────────
+  if (awaitingConfirmation) {
+    return (
+      <div className={`size-full flex items-center justify-center ${isDark ? 'bg-[#1A2332]' : 'bg-[#F8F7F4]'}`}>
+        <div className="w-full max-w-sm px-4 text-center flex flex-col items-center gap-6">
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${isDark ? 'bg-[#7AA897]' : 'bg-[#6B9B8C]'}`}>
+            <span className="text-white font-semibold text-2xl">H</span>
+          </div>
+          <div>
+            <p className={`font-semibold text-lg ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>
+              Check your email
+            </p>
+            <p className={`text-sm mt-2 leading-relaxed ${isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'}`}>
+              We sent a confirmation link to{' '}
+              <span className={`font-medium ${isDark ? 'text-[#E8E6E0]' : 'text-[#2D2D2D]'}`}>{email}</span>.
+              <br />Click it to activate your account.
+            </p>
+          </div>
+          <button
+            onClick={() => setAwaitingConfirmation(false)}
+            className={`text-sm underline-offset-2 hover:underline ${isDark ? 'text-[#7AA897]' : 'text-[#6B9B8C]'}`}
+          >
+            Back to sign in
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Sign in / Sign up ───────────────────────────────────────────────────────
   return (
     <div className={`size-full flex items-center justify-center ${isDark ? 'bg-[#1A2332]' : 'bg-[#F8F7F4]'}`}>
       <div className="w-full max-w-sm px-4">

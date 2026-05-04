@@ -41,6 +41,7 @@ export interface DbProfile {
   id: string;
   display_name: string;
   created_at: string;
+  last_name_change_at: string | null;
 }
 
 export interface DbGroup {
