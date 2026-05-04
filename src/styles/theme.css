@@ -1,7 +1,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* HabitOS Design System - Light Mode */
+  /* Ataraxia Design System - Light Mode */
   --font-size: 16px;
   --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'JetBrains Mono', 'Courier New', monospace;
@@ -47,7 +47,7 @@
 }
 
 .dark {
-  /* HabitOS Design System - Dark Mode */
+  /* Ataraxia Design System - Dark Mode */
   --background: #1A2332;
   --foreground: #E8E6E0;
   --card: #243347;

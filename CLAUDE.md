@@ -2,7 +2,7 @@
 @.claude-memory.md
 
 PROJECT CONTEXT:
-- Project: Habitos (branded "HabitOS")
+- Project: Ataraxia (branded "Ataraxia")
 - Origin: Generated from Figma Make (https://www.figma.com/design/TT6tRg5U3BGJtxG2ZrJtBG/HabitOS)
 - Stack: React 18 + TypeScript + Vite 6 + Tailwind CSS v4 + shadcn/ui + Recharts
 - Package manager: pnpm
