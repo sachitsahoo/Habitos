@@ -7,7 +7,7 @@ import { FriendsView } from './components/FriendsView';
 import { LeaderboardView } from './components/LeaderboardView';
 import { AuthScreen } from './components/AuthScreen';
 import { IOSInstallBanner } from './components/IOSInstallBanner';
-import { Moon, Sun, LogOut } from 'lucide-react';
+import { Moon, Sun, LogOut, CalendarDays, Calendar, BarChart2, ListChecks, Users, Trophy } from 'lucide-react';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useHabits } from '../hooks/useHabits';
 import { Button } from './components/ui/button';
@@ -203,22 +203,22 @@ function AuthenticatedApp({ user, isDark, toggleDark, pendingInviteCode, onClear
           </div>
         </div>
 
-        {/* Tab Bar */}
-        <div className={`px-3 sm:px-6 flex gap-1 sm:gap-6 border-t ${
+        {/* Desktop tab bar — hidden on mobile */}
+        <div className={`hidden sm:flex px-6 gap-6 border-t ${
           isDark ? 'border-[#3A4A5E]' : 'border-[#D4D2CA]'
         }`}>
           {([
-            { id: 'weekly',    label: 'Weekly' },
-            { id: 'monthly',   label: 'Monthly' },
-            { id: 'analytics', label: 'Analytics' },
-            { id: 'habits',    label: 'Habits' },
+            { id: 'weekly',      label: 'Weekly' },
+            { id: 'monthly',     label: 'Monthly' },
+            { id: 'analytics',   label: 'Analytics' },
+            { id: 'habits',      label: 'Habits' },
             { id: 'friends',     label: 'Friends' },
             { id: 'leaderboard', label: 'Groups' },
           ] as const).map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-2 sm:px-3 py-2.5 sm:py-3 text-xs sm:text-sm font-medium transition-colors relative flex-1 sm:flex-none ${
+              className={`px-3 py-3 text-sm font-medium transition-colors relative ${
                 activeTab === tab.id
                   ? isDark ? 'text-[#7AA897]' : 'text-[#6B9B8C]'
                   : isDark ? 'text-[#9B9B9B] hover:text-[#E8E6E0]' : 'text-[#6B6B6B] hover:text-[#2D2D2D]'
@@ -235,8 +235,8 @@ function AuthenticatedApp({ user, isDark, toggleDark, pendingInviteCode, onClear
         </div>
       </header>
 
-      {/* Content Area */}
-      <main className="flex-1 overflow-auto">
+      {/* Content Area — extra bottom padding on mobile for the nav bar */}
+      <main className="flex-1 overflow-auto pb-[calc(64px+env(safe-area-inset-bottom))] sm:pb-0">
         {activeTab === 'weekly'    && <WeeklyView habits={habits} />}
         {activeTab === 'monthly'   && <MonthlyView habits={habits} />}
         {activeTab === 'analytics' && <AnalyticsView habits={habits} />}
@@ -245,13 +245,45 @@ function AuthenticatedApp({ user, isDark, toggleDark, pendingInviteCode, onClear
         {activeTab === 'leaderboard' && (
           <LeaderboardView
             pendingInviteCode={pendingInviteCode}
-            onJoinComplete={(groupId) => {
+            onJoinComplete={() => {
               onClearInviteCode();
               setActiveTab('leaderboard');
             }}
           />
         )}
       </main>
+
+      {/* Mobile bottom nav — hidden on desktop */}
+      <nav className={`sm:hidden fixed bottom-0 left-0 right-0 z-40 border-t ${
+        isDark ? 'bg-[#243347] border-[#3A4A5E]' : 'bg-white border-[#D4D2CA]'
+      }`} style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div className="flex">
+          {([
+            { id: 'weekly',      label: 'Weekly',    icon: CalendarDays },
+            { id: 'monthly',     label: 'Monthly',   icon: Calendar },
+            { id: 'analytics',   label: 'Stats',     icon: BarChart2 },
+            { id: 'habits',      label: 'Habits',    icon: ListChecks },
+            { id: 'friends',     label: 'Friends',   icon: Users },
+            { id: 'leaderboard', label: 'Groups',    icon: Trophy },
+          ] as const).map(({ id, label, icon: Icon }) => {
+            const active = activeTab === id;
+            return (
+              <button
+                key={id}
+                onClick={() => setActiveTab(id)}
+                className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 transition-colors ${
+                  active
+                    ? isDark ? 'text-[#7AA897]' : 'text-[#6B9B8C]'
+                    : isDark ? 'text-[#9B9B9B]' : 'text-[#6B6B6B]'
+                }`}
+              >
+                <Icon className="w-5 h-5" strokeWidth={active ? 2.5 : 1.75} />
+                <span className="text-[10px] font-medium">{label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
     </div>
   );
 }
