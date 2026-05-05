@@ -10,12 +10,13 @@ function toDateKey(d: Date): string {
 function getPeriodStartDate(period: 'day' | 'week' | 'month' | 'all'): string {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  // NOTE: 'week' end date is handled separately in useLeaderboard (this Saturday, not today)
   if (period === 'day') {
     return toDateKey(today); // today only
   }
   if (period === 'week') {
     const d = new Date(today);
-    d.setDate(d.getDate() - 6); // rolling last 7 days
+    d.setDate(d.getDate() - d.getDay()); // back to most recent Sunday
     return toDateKey(d);
   }
   if (period === 'month') {
@@ -33,9 +34,18 @@ export function useLeaderboard(groupId: string | null, period: 'day' | 'week' | 
 
     setLoading(true);
     const startDate = getPeriodStartDate(period);
-    // Always pass local today as p_end_date so the server never uses CURRENT_DATE (UTC),
-    // which would produce wrong day_count for users behind UTC.
-    const endDate = toDateKey(new Date());
+    // For week: end date is this Saturday so the denominator is always 7 (fixed full week),
+    // not "days elapsed so far". Future days have no logs so the numerator still only grows.
+    // For all other periods: use local today so the server never uses CURRENT_DATE (UTC).
+    const today = new Date();
+    let endDate: string;
+    if (period === 'week') {
+      const saturday = new Date(today);
+      saturday.setDate(saturday.getDate() + (6 - saturday.getDay()));
+      endDate = toDateKey(saturday);
+    } else {
+      endDate = toDateKey(today);
+    }
 
     supabase
       .rpc('get_group_leaderboard', { p_group_id: groupId, p_start_date: startDate, p_end_date: endDate })
