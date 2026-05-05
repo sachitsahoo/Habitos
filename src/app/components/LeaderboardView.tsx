@@ -85,8 +85,12 @@ export function LeaderboardView({ pendingInviteCode, onJoinComplete }: Leaderboa
   const { groups, incomingInvites, loading: groupsLoading, fetchMembers, createGroup, joinByCode, inviteFriend, respondToInvite, kickMember, leaveGroup, deleteGroup } = useGroups();
   const { friends, friendIds, pendingOutIds, sendRequest } = useFriends();
 
-  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
-  const [period, setPeriod] = useState<'day' | 'week' | 'month' | 'all'>('week');
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(
+    () => localStorage.getItem('lb_groupId')
+  );
+  const [period, setPeriod] = useState<'day' | 'week' | 'month' | 'all'>(
+    () => (localStorage.getItem('lb_period') as 'day' | 'week' | 'month' | 'all') ?? 'week'
+  );
   const [members, setMembers] = useState<GroupMemberWithProfile[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [addingFriendId, setAddingFriendId] = useState<string | null>(null);
@@ -117,8 +121,21 @@ export function LeaderboardView({ pendingInviteCode, onJoinComplete }: Leaderboa
     });
   }, []);
 
+  // Persist selections across refreshes
   useEffect(() => {
-    if (groups.length > 0 && !selectedGroupId) setSelectedGroupId(groups[0].id);
+    if (selectedGroupId) localStorage.setItem('lb_groupId', selectedGroupId);
+    else localStorage.removeItem('lb_groupId');
+  }, [selectedGroupId]);
+
+  useEffect(() => {
+    localStorage.setItem('lb_period', period);
+  }, [period]);
+
+  // Fall back to first group if stored ID is missing or no longer valid
+  useEffect(() => {
+    if (groups.length === 0) return;
+    const isValid = groups.some(g => g.id === selectedGroupId);
+    if (!selectedGroupId || !isValid) setSelectedGroupId(groups[0].id);
   }, [groups, selectedGroupId]);
 
   useEffect(() => {
