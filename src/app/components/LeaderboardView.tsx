@@ -487,7 +487,7 @@ export function LeaderboardView({ pendingInviteCode, onJoinComplete }: Leaderboa
                         : `${mutedText} ${isDark ? 'hover:text-[#E8E6E0]' : 'hover:text-[#2D2D2D]'}`
                     }`}
                   >
-                    {p === 'day' ? 'Today' : p === 'week' ? 'Last 7 Days' : p === 'month' ? 'This Month' : 'All Time'}
+                    {p === 'day' ? 'Today' : p === 'week' ? 'Weekly' : p === 'month' ? 'This Month' : 'All Time'}
                   </button>
                 ))}
               </div>
