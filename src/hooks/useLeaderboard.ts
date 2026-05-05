@@ -43,6 +43,10 @@ export function useLeaderboard(groupId: string | null, period: 'day' | 'week' | 
       const saturday = new Date(today);
       saturday.setDate(saturday.getDate() + (6 - saturday.getDay()));
       endDate = toDateKey(saturday);
+    } else if (period === 'month') {
+      // Last day of current month — denominator is fixed at days-in-month, not days elapsed
+      const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      endDate = toDateKey(lastDay);
     } else {
       endDate = toDateKey(today);
     }
