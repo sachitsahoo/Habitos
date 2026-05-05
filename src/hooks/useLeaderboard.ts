@@ -33,9 +33,12 @@ export function useLeaderboard(groupId: string | null, period: 'day' | 'week' | 
 
     setLoading(true);
     const startDate = getPeriodStartDate(period);
+    // Always pass local today as p_end_date so the server never uses CURRENT_DATE (UTC),
+    // which would produce wrong day_count for users behind UTC.
+    const endDate = toDateKey(new Date());
 
     supabase
-      .rpc('get_group_leaderboard', { p_group_id: groupId, p_start_date: startDate })
+      .rpc('get_group_leaderboard', { p_group_id: groupId, p_start_date: startDate, p_end_date: endDate })
       .then(({ data, error }) => {
         if (!error && data) {
           setRows(
